@@ -1,7 +1,7 @@
 /* Super English — đăng nhập và đồng bộ tiến độ qua /api (dùng chung Redis + tài khoản với Super Honki) */
 (function(){
   const {esc,toast,get,put}=SE;
-  const APPS={'se:vocab':'vocab','se:writing':'writing'};
+  const APPS={'se:vocab':'vocab','se:writing':'writing','se:speaking':'speaking'};
   const btn=document.querySelector('.abtn');if(!btn)return;
   const lab=btn.querySelector('span');
   const sess=()=>{try{const a=JSON.parse(get('se:auth')||'null');return a&&a.token?a:null}catch(e){return null}};

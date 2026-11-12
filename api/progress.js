@@ -1,4 +1,4 @@
-/* GET /api/progress?app=vocab|writing -> {data:{map}, rev}
+/* GET /api/progress?app=vocab|writing|speaking -> {data:{map}, rev}
    PUT /api/progress?app=... {data:{map}, ifRev} -> {ok, rev}
    Dùng chung Redis và tài khoản với Super Honki. Khoá của web này: prog:vocab:<uid>, prog:writing:<uid> (và rev:...),
    không trùng với prog:<uid>, prog:goi:<uid>, prog:kanji:<uid> của Super Honki. */
@@ -13,7 +13,7 @@ module.exports = async (req, res) => {
     const uid = L.readToken(req.headers.authorization);
     if (!uid) return L.send(res, 401, { error: "Phiên đăng nhập đã hết hạn." });
     const app = String((req.query && req.query.app) || new URL(req.url, "http://x").searchParams.get("app") || "");
-    if (!/^(vocab|writing)$/.test(app)) return L.send(res, 400, { error: "Ứng dụng không hợp lệ." });
+    if (!/^(vocab|writing|speaking)$/.test(app)) return L.send(res, 400, { error: "Ứng dụng không hợp lệ." });
     const kd = "prog:" + app + ":" + uid, kr = "rev:" + app + ":" + uid;
     if (req.method === "GET") {
       const [raw, rev] = await Promise.all([L.redis("GET", kd), L.redis("GET", kr)]);
