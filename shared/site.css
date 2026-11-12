@@ -29,7 +29,7 @@ a{color:inherit}button{font:inherit;color:inherit;cursor:pointer}[hidden]{displa
 .snav a[aria-current="true"]{opacity:1;background:var(--coral);color:#fff}
 .tbtn{display:inline-flex;align-items:center;gap:8px;border:2px solid rgba(247,244,237,.4);background:transparent;color:#f7f4ed;border-radius:999px;padding:6px 14px 6px 8px;font:700 13px/1 var(--ui)}
 .tbtn:hover{border-color:#fff}.dot{width:20px;height:20px;border-radius:50%;background:conic-gradient(var(--green) 0 50%,var(--mint) 0 75%,var(--coral) 0);border:2px solid #fff}
-.tmenu{position:absolute;right:var(--gut);top:68px;width:250px;background:var(--surface);color:var(--ink);border-radius:14px;box-shadow:0 18px 50px var(--shadow);padding:8px;z-index:70;border:1px solid var(--line)}
+.tmenu{position:fixed;right:var(--gut);top:68px;width:250px;background:var(--surface);color:var(--ink);border-radius:14px;box-shadow:0 18px 50px var(--shadow);padding:8px;z-index:70;border:1px solid var(--line)}
 .tmenu button{display:flex;width:100%;align-items:center;gap:10px;border:0;background:none;padding:8px;border-radius:10px;text-align:left;font-weight:600;font-size:14px}
 .tmenu button:hover,.tmenu button[aria-checked="true"]{background:var(--mint-soft)}
 .tmenu i{display:flex;width:44px;height:22px;border-radius:6px;overflow:hidden;border:1px solid rgba(0,0,0,.12)}.tmenu i b{flex:1}
@@ -176,3 +176,40 @@ body.no-hl .cw{border-color:transparent}
 .tabs a.on{color:var(--green);border-color:var(--coral)}
 :root[data-theme="yoru"] .tabs a.on{color:var(--mint)}
 mark.kp{background:var(--hl);font-weight:600}
+
+/* tab trên cùng gọn trên điện thoại */
+.tbtn svg{display:none;flex:none}
+.vbtn[data-sex]{position:relative}
+@media(max-width:640px){
+ .strip__in,.strip__in{height:56px;flex-wrap:nowrap;padding:0 10px 3px;gap:6px;row-gap:0}
+ .brand{margin-right:0}.brand span{display:none}.brand svg{width:32px;height:32px}
+ .snav{margin-left:2px;gap:2px;flex:1;min-width:0}
+ .snav a{padding:7px 9px;font-size:13px}
+ .tbtn,.vbtn,.abtn,.mbtn{margin-left:0;padding:0;width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+ .tbtn svg{display:block}
+ .vbtn span,.abtn span,.mbtn span,.tbtn span{display:none}
+ .vbtn::after{content:"♀";position:absolute;right:1px;bottom:-1px;font-size:11px;line-height:1;background:var(--coral);color:#fff;border-radius:8px;padding:1px 3px}
+ .vbtn[data-sex="m"]::after{content:"♂"}
+ .abtn.in{background:var(--coral)}
+}
+@media(max-width:380px){.snav a{padding:7px 7px;font-size:12px}.tbtn,.vbtn,.abtn,.mbtn{width:33px;height:33px}}
+/* thẻ vuốt */
+.card{touch-action:pan-y;user-select:none;-webkit-user-select:none;position:relative;transform-origin:50% 90%;will-change:transform}
+.card.drag{transition:none;cursor:grabbing}
+.card.snap{transition:transform .28s cubic-bezier(.2,1.3,.4,1),opacity .2s}
+.card.fly{transition:transform .2s ease-in,opacity .2s ease-in}
+.card.in-l{animation:cardInL .32s cubic-bezier(.2,.9,.3,1.2)}
+.card.in-r{animation:cardInR .32s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes cardInL{from{opacity:0;transform:translateX(42px) rotate(3deg) scale(.94)}to{opacity:1;transform:none}}
+@keyframes cardInR{from{opacity:0;transform:translateX(-42px) rotate(-3deg) scale(.94)}to{opacity:1;transform:none}}
+.swhint{position:absolute;top:14px;z-index:3;padding:6px 12px;border-radius:999px;background:var(--coral);color:#fff;font-weight:800;font-size:13px;pointer-events:none;transition:opacity .1s}
+.swhint[data-d="l"]{right:14px}.swhint[data-d="r"]{left:14px}
+@media(prefers-reduced-motion:reduce){.card.in-l,.card.in-r{animation:none}}
+@media(max-width:640px){
+ .strip__in{gap:4px;padding:0 8px 3px}.brand svg{width:30px;height:30px}
+ .snav a{padding:7px 7px;font-size:12.5px}
+ .tbtn,.vbtn,.abtn,.mbtn{width:32px;height:32px}
+}
+.stage{overflow-x:clip}
+body{overflow-x:hidden}
+button.kp{font:inherit;color:inherit;background:var(--hl);border:0;border-bottom:2px solid var(--coral);border-radius:3px;padding:0 2px;cursor:pointer;font-weight:600}button.kp:hover{background:var(--mint-soft)}

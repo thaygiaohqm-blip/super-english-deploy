@@ -19,7 +19,7 @@
     if(ch){toast('Đã đồng bộ tiến độ từ tài khoản');setTimeout(()=>location.reload(),600)}}
   const timers={};
   window.SE_SYNC={dirty(n){if(!sess()||!APPS[n])return;clearTimeout(timers[n]);timers[n]=setTimeout(()=>syncOne(n,3).catch(()=>{}),1500)}};
-  function paint(){const a=sess();lab.textContent=a?(a.name||a.email.split('@')[0]).slice(0,12):'Đăng nhập'}
+  function paint(){const a=sess();lab.textContent=a?(a.name||a.email.split('@')[0]).slice(0,12):'Đăng nhập';btn.classList.toggle('in',!!a)}
   function modal(){
     const m=document.createElement('div');m.className='modal';const close=()=>m.remove();
     const body=h=>{m.innerHTML='<div class="modal__box authbox" role="dialog" aria-modal="true"><button class="modal__x" type="button" aria-label="Đóng">×</button>'+h+'</div>';m.querySelector('.modal__x').onclick=close};

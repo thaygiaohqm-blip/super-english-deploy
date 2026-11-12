@@ -17,15 +17,17 @@ const spk=(t,l)=>'<button class="icon-btn" type="button" data-say="'+esc(t)+'">'
 const bindSay=r=>$$('[data-say]',r).forEach(b=>b.onclick=ev=>{ev.stopPropagation();speak(b.dataset.say)});
 const head=o=>{H1.textContent=o.h1;LEAD.innerHTML=o.lead||'';CRUMB.innerHTML=o.crumb||'';META.innerHTML=(o.meta||[]).map(x=>'<span class="chip">'+esc(x)+'</span>').join('')};
 const rx=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-function hl(text,keys){
-  let out=esc(text),marks=[];
-  keys.forEach(([p])=>{
-    p=p.split('...')[0].trim();if(!p)return;
-    const ws=p.split(/\s+/);let f=ws[0];const stem=f.length>5?f.slice(0,-2):f.length>3?f.slice(0,-1):f;
-    const re=new RegExp('\\b'+rx(esc(stem))+'\\w*'+(ws.length>1?'\\s+'+ws.slice(1).map(w=>rx(esc(w))).join('\\s+'):''),'i');
-    const m=re.exec(out);if(m&&!/<mark/.test(m[0]))out=out.slice(0,m.index)+'<mark class="kp">'+m[0]+'</mark>'+out.slice(m.index+m[0].length);
-  });
-  return out;
+function hl(text,spans,keys){
+  let out='',pos=0;
+  (spans||[]).forEach(([a,b,k])=>{if(a<pos)return;out+=esc(text.slice(pos,a))+'<button type="button" class="kp" data-k="'+k+'">'+esc(text.slice(a,b))+'</button>';pos=b});
+  return out+esc(text.slice(pos));
+}
+function kModal(k,sentEn){
+  const m=document.createElement('div');m.className='modal';
+  m.innerHTML='<div class="modal__box" role="dialog" aria-modal="true"><button class="modal__x" type="button" aria-label="Đóng">×</button><span class="tag">Cụm từ · Speaking</span><h2 style="margin-top:8px">'+esc(k[0])+'</h2><div class="vi">'+esc(k[1])+'</div>'
+   +(sentEn?'<div class="ctx"><div class="en" style="font-family:var(--serif)">'+esc(sentEn)+'</div></div>':'')+'<div class="row">'+spk(k[0].split('...')[0],'Nghe cụm từ')+(sentEn?spk(sentEn,'Nghe câu'):'')+'</div></div>';
+  document.body.appendChild(m);const close=()=>{m.remove();document.removeEventListener('keydown',ek)};const ek=ev=>{if(ev.key==='Escape')close()};document.addEventListener('keydown',ek);
+  m.onclick=ev=>{if(ev.target===m||ev.target.closest('.modal__x'))close()};bindSay(m);
 }
 const key=(t,b)=>t+':'+b;
 function home(){
@@ -51,11 +53,11 @@ function topic(id,bandId){
    +'<div class="tabs" style="margin-top:18px" role="tablist">'+BANDS.map(([k,l])=>'<a class="'+(k===b?'on':'')+'" role="tab" href="#/'+t.id+'/'+k+'" style="padding:8px 14px">Band '+l+'</a>').join('')+'</div>'
    +'<div class="note" style="margin-top:12px"><b>Đặc điểm band '+bl+':</b> '+dsc.map((x,j)=>DL[j]+': '+esc(x)).join(' · ')+'</div>'
    +'<div class="row" style="margin-top:14px;justify-content:space-between"><h2 class="sect" style="margin:0">Bài nói mẫu</h2><div class="row"><button class="btn sm" id="all" type="button">Nghe cả bài</button><button class="btn sm" id="tv" type="button">Ẩn bản dịch</button></div></div>'
-   +'<div id="smp" style="margin-top:12px">'+s.t.map((p,j)=>'<div class="para" style="margin-bottom:12px"><p class="en" style="font-family:var(--serif);font-size:1.08rem;line-height:1.7;margin:0">'+hl(p[0],s.k)+' <button class="icon-btn" type="button" data-say="'+esc(p[0])+'" aria-label="Nghe đoạn '+(j+1)+'">'+ICON+'</button></p><p class="vi" style="margin:4px 0 0;color:var(--muted)">'+esc(p[1])+'</p></div>').join('')+'</div>'
-   +'<h2 class="sect" style="margin-top:22px">Cụm từ chính của bài</h2><div class="grid" style="margin-top:10px">'+s.k.map(([p,v])=>'<button class="card-l" type="button" data-say="'+esc(p.split('...')[0])+'" style="text-align:left"><h3 style="margin:0">'+esc(p)+'</h3><p style="margin:4px 0 0">'+esc(v)+'</p></button>').join('')+'</div>'
+   +'<div id="smp" style="margin-top:12px">'+s.t.map((p,j)=>'<div class="para" style="margin-bottom:12px"><p class="en" style="font-family:var(--serif);font-size:1.08rem;line-height:1.7;margin:0">'+hl(p[0],s.h[j],s.k)+' <button class="icon-btn" type="button" data-say="'+esc(p[0])+'" aria-label="Nghe đoạn '+(j+1)+'">'+ICON+'</button></p><p class="vi" style="margin:4px 0 0;color:var(--muted)">'+esc(p[1])+'</p></div>').join('')+'</div>'
+   +'<h2 class="sect" style="margin-top:22px">Cụm từ chính của bài ('+s.k.length+')</h2><p style="margin:6px 0 0;color:var(--muted)">Bấm vào cụm được tô sáng trong bài hoặc thẻ bên dưới để nghe và xem nghĩa.</p><div class="grid" style="margin-top:10px">'+s.k.map(([p,v])=>'<button class="card-l" type="button" data-say="'+esc(p.split('...')[0])+'" style="text-align:left"><h3 style="margin:0">'+esc(p)+'</h3><p style="margin:4px 0 0">'+esc(v)+'</p></button>').join('')+'</div>'
    +'<h2 class="sect" style="margin-top:22px">Câu hỏi mở rộng (Part 3)</h2><ol style="margin:10px 0 0;padding-left:20px;line-height:1.8">'+t.p3.map(q=>'<li>'+esc(q[0])+' <small style="color:var(--muted)">· '+esc(q[1])+'</small></li>').join('')+'</ol>'
    +'<div class="row" style="margin-top:22px;justify-content:space-between"><button class="btn" id="dn" type="button">'+(prog.get(key(t.id,b))==='ok'?'Đã luyện (bỏ đánh dấu)':'Đánh dấu đã luyện band '+bl)+'</button><span>'+(i>0?'<a class="btn sm" href="#/'+TP[i-1].id+'/'+b+'">← '+esc(TP[i-1].name)+'</a> ':'')+(i<TP.length-1?'<a class="btn sm" href="#/'+TP[i+1].id+'/'+b+'">'+esc(TP[i+1].name)+' →</a>':'')+'</span></div>';
-  bindSay(main);document.title=t.name+' · Band '+bl+' — Super Speaking';
+  bindSay(main);$$('.kp',main).forEach(b=>b.onclick=()=>{const para=b.closest('.para'),sent=para?para.querySelector('[data-say]').dataset.say:'';kModal(s.k[+b.dataset.k],sent)});document.title=t.name+' · Band '+bl+' — Super Speaking';
   $('#all').onclick=()=>speak(s.t.map(p=>p[0]).join(' '));
   $('#tv').onclick=ev=>{const h=ev.target.textContent.startsWith('Ẩn');$$('#smp .vi').forEach(e=>e.style.display=h?'none':'');ev.target.textContent=h?'Hiện bản dịch':'Ẩn bản dịch'};
   $('#dn').onclick=()=>{const k=key(t.id,b);prog.set(k,prog.get(k)==='ok'?null:'ok');topic(id,b)};
