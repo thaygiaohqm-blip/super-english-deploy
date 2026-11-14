@@ -194,7 +194,8 @@ mark.kp{background:var(--hl);font-weight:600}
 }
 @media(max-width:380px){.snav a{padding:7px 7px;font-size:12px}.tbtn,.vbtn,.abtn,.mbtn{width:33px;height:33px}}
 /* thẻ vuốt */
-.card{touch-action:pan-y;user-select:none;-webkit-user-select:none;position:relative;transform-origin:50% 90%;will-change:transform}
+.card,.card *{touch-action:pan-y}
+.card{-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;position:relative;transform-origin:50% 90%;will-change:transform}
 .card.drag{transition:none;cursor:grabbing}
 .card.snap{transition:transform .28s cubic-bezier(.2,1.3,.4,1),opacity .2s}
 .card.fly{transition:transform .2s ease-in,opacity .2s ease-in}
@@ -216,3 +217,6 @@ button.kp{font:inherit;color:inherit;background:var(--hl);border:0;border-bottom
 /* 4 tab học: cho cuộn ngang thay vì đè lên nút bên phải */
 @media(max-width:640px){.snav{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}.snav::-webkit-scrollbar{display:none}.snav a{flex:0 0 auto;padding:7px 8px;font-size:12.5px}}
 @media(max-width:380px){.snav a{padding:7px 6px;font-size:12px}}
+#aud{position:sticky;top:calc(var(--stripH,56px) + 6px);z-index:20;box-shadow:0 6px 18px #0002;padding:8px 12px}
+#aud .ptitle{margin-bottom:4px}
+#aud audio{height:36px}

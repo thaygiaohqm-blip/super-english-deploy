@@ -13,31 +13,39 @@
   const FEM=/female|woman|samantha|karen|moira|tessa|victoria|fiona|zira|hazel|susan|aria|jenny|libby|sonia|serena|allison|ava|joanna|kendra|kimberly|salli|ivy|emma|amy|google us english|google uk english female|sfg|iol|#female/i;
   const MAL=/\bmale\b|daniel|david|mark|george|james|alex|fred|ryan|guy|thomas|oliver|arthur|rishi|gordon/i;
   let voice=null,sex=get('se:voice')||'f';
-  const pick=()=>{if(!('speechSynthesis' in window))return;const vs=speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang));const us=v=>/en[-_]US/i.test(v.lang)?0:/en[-_]GB/i.test(v.lang)?1:2;const rank=v=>(/natural|neural|online|premium|enhanced/i.test(v.name)?0:/google|samantha|karen|zira|aria|jenny/i.test(v.name)?1:2);
+  const pick=()=>{if(!('speechSynthesis' in window))return;const vs=speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang));const us=v=>/en[-_]GB/i.test(v.lang)?0:/en[-_]US/i.test(v.lang)?1:2;const rank=v=>(/natural|neural|online|premium|enhanced/i.test(v.name)?0:/google|samantha|karen|zira|aria|jenny/i.test(v.name)?1:2);
     const f=vs.filter(v=>FEM.test(v.name)&&!/\bmale\b/i.test(v.name.replace(/female/ig,''))).sort((a,b)=>us(a)-us(b)||rank(a)-rank(b));
     const m=vs.filter(v=>MAL.test(v.name)&&!FEM.test(v.name)).sort((a,b)=>us(a)-us(b)||rank(a)-rank(b));
     voice=(sex==='f'?f[0]:m[0])||(sex==='f'?null:vs[0])||null};
   if('speechSynthesis' in window){pick();speechSynthesis.onvoiceschanged=pick}
-  const speak=t=>{if(!('speechSynthesis' in window))return toast('Trình duyệt này chưa hỗ trợ đọc phát âm');speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t.replace(/____/g,'blank'));u.lang='en-US';if(voice){u.voice=voice;u.lang=voice.lang}u.rate=.92;if(!voice)u.pitch=sex==='f'?1.3:.85;speechSynthesis.speak(u)};
-  const setSex=x=>{sex=x;put('se:voice',x);pick();const b=document.querySelector('.vbtn span');if(b)b.textContent=x==='f'?'Giọng nữ':'Giọng nam';const vb=document.querySelector('.vbtn');if(vb)vb.dataset.sex=x;speak('Hello, this is the '+(x==='f'?'female':'male')+' voice.')};
-  const swipe=(el,left,right,o)=>{if(!el)return;o=o||{};let x0=0,y0=0,t0=0,dx=0,on=false,lock=0,hint=null;const W=()=>el.offsetWidth||300;
+  /* giọng AI Anh-Anh (file mp3 dựng sẵn); từ nào chưa có thì dùng giọng của trình duyệt */
+  const slug=t=>String(t).toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+  let TT=null;{const sc=document.createElement('script');sc.src=root+'tts/index.js';sc.onload=()=>{TT=new Set(window.SE_TTSX||[])};document.head.appendChild(sc)}
+  let aud=null,curU=null,chain=null;
+  const stopAi=()=>{chain=null;if(aud){aud.onended=aud.onerror=null;aud.pause();aud=null}curU=null};
+  const play=(url,done)=>{const was=curU;stopAi();try{speechSynthesis.cancel()}catch(e){}curT=null;if(was===url)return;curU=url;const a=aud=new Audio(url);a.onended=()=>{if(aud===a){aud=null;curU=null;done&&done()}};a.onerror=()=>{if(aud===a){aud=null;curU=null}};a.play().catch(()=>{})};
+  const playList=urls=>{const key=urls.join('|');if(chain===key){stopAi();return}stopAi();chain=key;let k=0;const next=()=>{if(chain!==key||k>=urls.length){if(chain===key)chain=null;return}const u=urls[k++];curU=u;const a=aud=new Audio(u);a.onended=()=>{if(aud===a)next()};a.onerror=()=>{if(aud===a)next()};a.play().catch(()=>{})};next()};
+  let curT=null;const speak=t=>{const k=slug(t.replace(/____/g,'blank'));if(TT&&TT.has(k)){play(root+'tts/'+sex+'/'+k+'.mp3');return}
+    if(!('speechSynthesis' in window))return toast('Trình duyệt này chưa hỗ trợ đọc phát âm');stopAi();const was=curT;speechSynthesis.cancel();if(was===t){curT=null;return}curT=t;const u=new SpeechSynthesisUtterance(t.replace(/____/g,'blank'));u.onend=u.onerror=()=>{if(curT===t)curT=null};u.lang='en-US';if(voice){u.voice=voice;u.lang=voice.lang}u.rate=.92;if(!voice)u.pitch=sex==='f'?1.3:.85;speechSynthesis.speak(u)};
+  const setSex=x=>{sex=x;put('se:voice',x);pick();const b=document.querySelector('.vbtn span');if(b)b.textContent=x==='f'?'Giọng nữ':'Giọng nam';const vb=document.querySelector('.vbtn');if(vb)vb.dataset.sex=x;speak('hello')};
+  const swipe=(el,left,right,o)=>{if(!el)return;o=o||{};let x0=0,y0=0,t0=0,dx=0,on=false,lock=0,hint=null,busy=false,pid=null;const W=()=>el.offsetWidth||300;
     const can=d=>d<0?(o.l?o.l():true):(o.r?o.r():true);
     const reset=()=>{el.classList.remove('drag');el.classList.add('snap');el.style.transform='';el.style.opacity='';setTimeout(()=>el.classList.remove('snap'),260);if(hint){hint.remove();hint=null}};
-    el.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'&&e.button!==0)return;if(e.target.closest('button,a,[data-say]'))return;x0=e.clientX;y0=e.clientY;t0=Date.now();dx=0;on=true;lock=0;el._moved=false});
-    el.addEventListener('pointermove',e=>{if(!on)return;const mx=e.clientX-x0,my=e.clientY-y0;
-      if(!lock){if(Math.abs(mx)>8&&Math.abs(mx)>Math.abs(my)*1.2){lock=1;try{el.setPointerCapture(e.pointerId)}catch(_){}el.classList.remove('snap');el.classList.add('drag');hint=document.createElement('div');hint.className='swhint';el.appendChild(hint)}else if(Math.abs(my)>10){lock=2}}
+    el.addEventListener('pointerdown',e=>{if(busy||on||(e.pointerType==='mouse'&&e.button!==0)||e.isPrimary===false)return;pid=e.pointerId;if(e.target.closest('button,a,[data-say]'))return;x0=e.clientX;y0=e.clientY;t0=Date.now();dx=0;on=true;lock=0;el._moved=false});
+    el.addEventListener('pointermove',e=>{if(!on||e.pointerId!==pid)return;const mx=e.clientX-x0,my=e.clientY-y0;
+      if(!lock){if(Math.abs(mx)>6&&Math.abs(mx)>Math.abs(my)*.75){lock=1;try{el.setPointerCapture(e.pointerId)}catch(_){}el.classList.remove('snap');el.classList.add('drag');hint=document.createElement('div');hint.className='swhint';el.appendChild(hint)}else if(Math.abs(my)>12&&Math.abs(my)>Math.abs(mx)*1.6){lock=2}}
       if(lock!==1)return;e.preventDefault();el._moved=true;dx=mx;const ok=can(dx<0?-1:1),k=ok?1:.25,x=dx*k,r=Math.max(-14,Math.min(14,x/W()*22));
       el.style.transform='translateX('+x+'px) rotate('+r+'deg)';el.style.opacity=String(1-Math.min(.35,Math.abs(x)/W()*.5));
       if(hint){hint.textContent=dx<0?'Thẻ sau →':'← Thẻ trước';hint.dataset.d=dx<0?'l':'r';hint.style.opacity=ok?String(Math.min(1,Math.abs(dx)/(W()*.3))):'0'}});
-    const end=e=>{if(!on)return;on=false;if(lock!==1){return}const v=Math.abs(dx)/Math.max(1,Date.now()-t0),d=dx<0?-1:1;
-      if((Math.abs(dx)>W()*.28||v>.6&&Math.abs(dx)>40)&&can(d)){el.classList.remove('drag');el.classList.add('fly');el.style.transform='translateX('+(d*W()*1.3)+'px) rotate('+(d*18)+'deg)';el.style.opacity='0';
+    const end=e=>{if(!on||(e&&e.pointerId!==pid))return;on=false;try{el.releasePointerCapture(pid)}catch(_){}if(lock!==1){return}const v=Math.abs(dx)/Math.max(1,Date.now()-t0),d=dx<0?-1:1;
+      if((Math.abs(dx)>W()*.2||v>.35&&Math.abs(dx)>28)&&can(d)){busy=true;el.classList.remove('drag');el.classList.add('fly');el.style.transform='translateX('+(d*W()*1.3)+'px) rotate('+(d*18)+'deg)';el.style.opacity='0';
         setTimeout(()=>{(d<0?left:right)();const n=document.getElementById(el.id);if(n&&n!==el){n.classList.add(d<0?'in-l':'in-r')}},190)}
       else reset();setTimeout(()=>{el._moved=false},0)};
-    el.addEventListener('pointerup',end);el.addEventListener('pointercancel',()=>{if(on&&lock===1){on=false;reset()}else on=false});
+    el.addEventListener('pointerup',end);el.addEventListener('pointercancel',()=>{if(on&&lock===1){on=false;reset()}else on=false});el.addEventListener('dragstart',e=>e.preventDefault());
     el.addEventListener('click',e=>{if(el._moved){e.stopImmediatePropagation();e.preventDefault()}},true)};
   let tt;const toast=m=>{let t=document.querySelector('.toast');if(!t){t=document.createElement('div');t.className='toast';document.body.appendChild(t)}t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,2200)};
   const norm=s=>String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/đ/g,'d').replace(/Đ/g,'D').toLowerCase();
-  window.SE={esc,shuffle,store,speak,toast,norm,root,get,put,swipe};
+  window.SE={esc,shuffle,store,speak,toast,norm,root,get,put,swipe,play,playList,sex:()=>sex};
   const logo='<svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="10" fill="#27c4b5"/><path d="M12 11h16v4H17v4h9v4h-9v4h11v4H12z" fill="#003838"/><circle cx="31" cy="30" r="4" fill="#ed3838"/></svg>';
   const link=(h,l,id)=>'<a href="'+root+h+'"'+(page===id?' aria-current="true"':'')+'>'+l+'</a>';
   const s=document.createElement('div');s.className='strip';
@@ -56,3 +64,8 @@
   const addF=()=>document.body.appendChild(f);if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',addF);else addF();
 })();
 (function(){const f=()=>{const n=document.querySelector('.snav'),c=n&&n.querySelector('[aria-current="true"]');if(c)n.scrollLeft=Math.max(0,c.offsetLeft-n.clientWidth/2+c.offsetWidth/2)};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(f,0));else setTimeout(f,0)})();
+/* Tiêu đề tab trình duyệt luôn là "Super English - <mục đang chọn>" */
+(function(){const N={vocab:'Từ vựng',writing:'Writing',speaking:'Speaking',giaotrinh:'Giáo trình'};const pg=document.body.dataset.page||'home';const T=N[pg]?'Super English - '+N[pg]:'Super English';
+  const fix=()=>{if(document.title!==T)document.title=T};
+  const start=()=>{fix();const t=document.querySelector('title');if(t)new MutationObserver(fix).observe(t,{childList:true,characterData:true,subtree:true})};
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start()})();
