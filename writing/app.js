@@ -58,6 +58,12 @@ function home(){
   +'<div class="note">Đề 3 và Đề 4 có đầy đủ bản dịch và collocation từ tài liệu của bạn. Đề 1 và Đề 2 chỉ có bài tiếng Anh trong tài liệu, nên phần dịch và collocation do Claude biên soạn thêm.</div>';
 }
 /* ---- trang một đề ---- */
+const AUDIO={d2:{t:'Nghe bài mẫu · Đề 2 (Robot)',f:'audio/d2-female.mp3',m:'audio/d2-male.mp3'},d4b:{t:'Nghe bài mẫu · Đề 4B (Truyền thông)',f:'audio/d4b-female.mp3',m:'audio/d4b-male.mp3'}};
+function audioBox(id){const a=AUDIO[id];if(!a)return '';const sx=SE.get('se:voice')==='m'?'m':'f';
+  return '<div class="panel" id="aud" style="margin:14px 0"><div class="ptitle" style="margin-top:0">'+esc(a.t)+'</div><audio controls preload="metadata" style="width:100%" src="'+a[sx]+'"></audio><div class="row" style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button class="btn sm" type="button" data-v="f" aria-pressed="'+(sx==='f')+'">Giọng nữ</button><button class="btn sm" type="button" data-v="m" aria-pressed="'+(sx==='m')+'">Giọng nam</button><button class="btn sm" type="button" data-r=".75">0.75×</button><button class="btn sm" type="button" data-r="1">1×</button><button class="btn sm" type="button" data-r="1.25">1.25×</button></div></div>'}
+function bindAudio(id){const box=document.getElementById('aud');if(!box)return;const au=box.querySelector('audio'),a=AUDIO[id];
+  box.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{const t=au.currentTime,pl=!au.paused,r=au.playbackRate;au.src=a[b.dataset.v];au.playbackRate=r;au.currentTime=0;if(pl)au.play();box.querySelectorAll('[data-v]').forEach(x=>x.setAttribute('aria-pressed',x===b))});
+  box.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{au.playbackRate=+b.dataset.r})}
 function essay(id,tab){
   const e=EB[id];if(!e)return nf();
   tab=tab||(e.paras.length?'song-ngu':'de');
@@ -81,10 +87,10 @@ function essay(id,tab){
   else if(tab==='own'){
     body='<div class="panel essay-text">'+e.own.paras.map(p=>'<p>'+esc(p)+'</p>').join('')+'</div>';
   }
-  main.innerHTML='<div class="tabs" role="tablist">'+tabs.map(t=>'<button type="button" role="tab" aria-selected="'+(t[0]===tab)+'" data-tab="'+t[0]+'">'+t[1]+'</button>').join('')+(e.colls.length||e.sents.length?'<a class="btn sm coral" style="margin:6px 0 6px auto" href="#/e/'+e.id+'/on-tap">Ôn tập đề này</a>':'')+'</div>'+body+(tab!=='en'&&tab!=='vi'&&e.note?'<div class="note">'+esc(e.note)+'</div>':'');
+  main.innerHTML='<div class="tabs" role="tablist">'+tabs.map(t=>'<button type="button" role="tab" aria-selected="'+(t[0]===tab)+'" data-tab="'+t[0]+'">'+t[1]+'</button>').join('')+(e.colls.length||e.sents.length?'<a class="btn sm coral" style="margin:6px 0 6px auto" href="#/e/'+e.id+'/on-tap">Ôn tập đề này</a>':'')+'</div>'+(tab==='colloc'||tab==='de'||tab==='own'?'':audioBox(id))+body+(tab!=='en'&&tab!=='vi'&&e.note?'<div class="note">'+esc(e.note)+'</div>':'');
   $$('[data-tab]').forEach(b=>b.onclick=()=>{location.hash='#/e/'+id+'/'+b.dataset.tab});
   $$('[data-cc]').forEach(b=>b.onclick=()=>collModal(e.colls[+b.dataset.cc]));
-  bindSay(main);
+  bindSay(main);bindAudio(id);
   $$('.sw').forEach(b=>b.onclick=()=>{const on=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',on);const t=b.dataset.t;
     if(t==='vi')document.body.classList.toggle('hide-vi',!on);else if(t==='en')document.body.classList.toggle('hide-en',on);else document.body.classList.toggle('no-hl',!on)});
   $$('.pair .en').forEach(d=>d.addEventListener('click',()=>{if(document.body.classList.contains('hide-en')){d.style.filter='none';setTimeout(()=>d.style.filter='',2500)}}));

@@ -1,6 +1,29 @@
 {
   "cleanUrls": false,
   "trailingSlash": false,
-  "functions": { "api/*.js": { "maxDuration": 10 } },
-  "headers": [ { "source": "/api/(.*)", "headers": [ { "key": "Cache-Control", "value": "no-store" } ] } ]
+  "functions": {
+    "api/*.js": {
+      "maxDuration": 10
+    }
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    },
+    {
+      "source": "/giaotrinh/(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    }
+  ]
 }

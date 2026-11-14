@@ -1,0 +1,47 @@
+.gtmodes{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:18px 0 6px;position:sticky;top:var(--stripH,56px);z-index:5;background:var(--bg);padding:8px 0;border-bottom:1px solid var(--line)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.seg button{border:0;background:transparent;padding:7px 14px;font:inherit;font-weight:600;font-size:.88rem;cursor:pointer;color:inherit}
+.seg button.on{background:var(--green);color:#fff}
+.sw2{display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:transparent;font:inherit;font-weight:600;font-size:.88rem;cursor:pointer;color:inherit}
+.sw2.on{background:var(--mint);color:#00201f;border-color:transparent}
+.rp{margin:0 0 16px}
+.rp .en{font-family:var(--serif);font-size:1.1rem;line-height:1.8;margin:0}
+.rp .vi{margin:6px 0 0;color:var(--muted);line-height:1.65}
+.rp.hide .en{filter:blur(7px);cursor:pointer;user-select:none;transition:filter .2s}
+.rp.hide.rev .en{filter:none;user-select:auto}
+.rp.hide:not(.rev)::after{content:"Chạm để xem tiếng Anh";display:block;font-size:.78rem;color:var(--muted);margin-top:4px}
+.rp.en-only .vi{display:none}
+.rp .rh{display:inline}
+body.study .rp .w{border-radius:3px;cursor:pointer}
+body.study .rp .w:hover{background:var(--mint-soft)}
+mark.gw,button.gw{all:unset;cursor:pointer;background:linear-gradient(transparent 58%,var(--hl-line) 58%);border-radius:2px;padding:0 1px;font-family:inherit}
+body:not(.study) mark.gw,body:not(.study) button.gw{background:none;cursor:text}
+.gtip{position:fixed;left:50%;transform:translateX(-50%);bottom:max(14px,env(safe-area-inset-bottom));width:min(560px,calc(100% - 24px));background:var(--surface);color:inherit;border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 40px #0004;padding:14px 16px;z-index:60}
+.gtip h3{margin:0 0 4px;font-size:1.15rem}
+.gtip input{width:100%;box-sizing:border-box;margin:8px 0;padding:9px 12px;border-radius:10px;border:1px solid var(--line);font:inherit;background:transparent;color:inherit}
+.gtip .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.lrow{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0 0 12px}
+.lrow .sp{font-weight:800;font-size:.78rem;letter-spacing:.02em;color:var(--green);padding-top:4px;white-space:nowrap}
+.lrow .en{font-family:var(--serif);line-height:1.7}
+.lrow .vi{grid-column:2;color:var(--muted);font-size:.94rem;line-height:1.6}
+.lmono{margin:0 0 14px}
+.lmono .en{font-family:var(--serif);line-height:1.8;font-size:1.06rem;margin:0}
+.lmono .vi{margin:6px 0 0;color:var(--muted);line-height:1.65}
+body.novi .vi{display:none}
+.player{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;margin-top:20px}
+.player audio{width:100%}
+.player .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
+.scr-off{padding:22px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:14px;margin-top:16px}
+.ulist{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:6px}
+.ulist a{display:flex;gap:8px;align-items:center;justify-content:space-between;text-decoration:none;color:inherit;padding:8px 10px;border-radius:10px;background:var(--mint-soft)}
+.ulist a:hover{background:var(--mint)33}
+.ulist .t{font-weight:600;font-size:.93rem}
+.ulist .k{font-size:.74rem;color:var(--muted);white-space:nowrap}
+.ulist .ok{color:#1a9b4b;font-weight:800}
+.wcard{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:12px;background:var(--mint-soft);margin-bottom:8px}
+.wcard b{font-size:1.05rem}
+.wcard small{color:var(--muted);display:block;margin-top:2px}
+.wlist.hidevi .wv{filter:blur(6px);cursor:pointer}
+.fc{min-height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;border-radius:18px;background:var(--surface);border:1px solid var(--line);cursor:pointer;margin-top:16px;user-select:none}
+.fc .big{font-size:1.6rem;font-weight:800;margin:0}
+.fc .ctx{margin-top:10px;font-family:var(--serif);color:var(--muted);font-size:.95rem}

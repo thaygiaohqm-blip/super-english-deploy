@@ -213,3 +213,6 @@ mark.kp{background:var(--hl);font-weight:600}
 .stage{overflow-x:clip}
 body{overflow-x:hidden}
 button.kp{font:inherit;color:inherit;background:var(--hl);border:0;border-bottom:2px solid var(--coral);border-radius:3px;padding:0 2px;cursor:pointer;font-weight:600}button.kp:hover{background:var(--mint-soft)}
+/* 4 tab học: cho cuộn ngang thay vì đè lên nút bên phải */
+@media(max-width:640px){.snav{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}.snav::-webkit-scrollbar{display:none}.snav a{flex:0 0 auto;padding:7px 8px;font-size:12.5px}}
+@media(max-width:380px){.snav a{padding:7px 6px;font-size:12px}}
