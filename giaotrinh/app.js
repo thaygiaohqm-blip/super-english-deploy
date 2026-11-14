@@ -100,7 +100,7 @@ function home(){
 }
 /* ---- đọc đoạn bằng giọng AI Anh-Anh (nếu có file), không thì giọng trình duyệt ---- */
 const pUrl=t=>{const m=window.SE_GTP||{};return m[t]?'tts/'+SE.sex()+'/p/'+m[t]+'.mp3':null};
-const sayP=t=>{const u=pUrl(t);if(u)SE.play(u);else speak(t)};
+const sayP=t=>{const u=pUrl(t);if(u)SE.play(u,null,()=>speak(t));else speak(t)};
 /* ---- bài đọc ---- */
 function reading(uid,i){
   const u=UB[uid],r=u&&u.reading[+i];if(!r)return home();

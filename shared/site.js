@@ -20,13 +20,18 @@
   if('speechSynthesis' in window){pick();speechSynthesis.onvoiceschanged=pick}
   /* giọng AI Anh-Anh (file mp3 dựng sẵn); từ nào chưa có thì dùng giọng của trình duyệt */
   const slug=t=>String(t).toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
-  let TT=null;{const sc=document.createElement('script');sc.src=root+'tts/index.js';sc.onload=()=>{TT=new Set(window.SE_TTSX||[])};document.head.appendChild(sc)}
-  let aud=null,curU=null,chain=null;
+  window.SE_TTSX=window.SE_TTSX||{};['f','m'].forEach(g=>{const sc=document.createElement('script');sc.src=root+'tts/index_'+g+'.js';document.head.appendChild(sc)});
+  let aud=null,curU=null,chain=null;const blobs={};
   const stopAi=()=>{chain=null;if(aud){aud.onended=aud.onerror=null;aud.pause();aud=null}curU=null};
-  const play=(url,done)=>{const was=curU;stopAi();try{speechSynthesis.cancel()}catch(e){}curT=null;if(was===url)return;curU=url;const a=aud=new Audio(url);a.onended=()=>{if(aud===a){aud=null;curU=null;done&&done()}};a.onerror=()=>{if(aud===a){aud=null;curU=null}};a.play().catch(()=>{})};
+  /* lấy 1 đoạn trong file gộp bằng HTTP Range */
+  const clipUrl=async(g,k)=>{const e=(window.SE_TTSX[g]||{})[k];if(!e)return null;const id=g+k;if(blobs[id])return blobs[id];
+    const r=await fetch(root+'tts/pack_'+g+'_'+e[0]+'.bin',{headers:{Range:'bytes='+e[1]+'-'+(e[1]+e[2]-1)}});if(!r.ok&&r.status!==206)throw 0;let b=await r.blob();if(b.size>e[2])b=b.slice(e[1],e[1]+e[2]);return blobs[id]=URL.createObjectURL(new Blob([b],{type:'audio/mpeg'}))};
+  const runAudio=(key,getUrl,done,fail)=>{const was=curU;stopAi();try{speechSynthesis.cancel()}catch(e){}curT=null;if(was===key)return;curU=key;
+    Promise.resolve(getUrl()).then(u=>{if(curU!==key)return;const a=aud=new Audio(u);a.onended=()=>{if(aud===a){aud=null;curU=null;done&&done()}};a.onerror=()=>{if(aud===a){aud=null;curU=null;fail&&fail()}};return a.play()}).catch(()=>{if(curU===key){curU=null;aud=null;fail&&fail()}})};
+  const play=(url,done,fail)=>runAudio(url,()=>url,done,fail);
   const playList=urls=>{const key=urls.join('|');if(chain===key){stopAi();return}stopAi();chain=key;let k=0;const next=()=>{if(chain!==key||k>=urls.length){if(chain===key)chain=null;return}const u=urls[k++];curU=u;const a=aud=new Audio(u);a.onended=()=>{if(aud===a)next()};a.onerror=()=>{if(aud===a)next()};a.play().catch(()=>{})};next()};
-  let curT=null;const speak=t=>{const k=slug(t.replace(/____/g,'blank'));if(TT&&TT.has(k)){play(root+'tts/'+sex+'/'+k+'.mp3');return}
-    if(!('speechSynthesis' in window))return toast('Trình duyệt này chưa hỗ trợ đọc phát âm');stopAi();const was=curT;speechSynthesis.cancel();if(was===t){curT=null;return}curT=t;const u=new SpeechSynthesisUtterance(t.replace(/____/g,'blank'));u.onend=u.onerror=()=>{if(curT===t)curT=null};u.lang='en-US';if(voice){u.voice=voice;u.lang=voice.lang}u.rate=.92;if(!voice)u.pitch=sex==='f'?1.3:.85;speechSynthesis.speak(u)};
+  let curT=null;const speak=t=>{const k=slug(t.replace(/____/g,'blank'));if((window.SE_TTSX[sex]||{})[k]){runAudio('w:'+sex+k,()=>clipUrl(sex,k),null,()=>speak2(t));return}speak2(t)};
+  const speak2=t=>{if(!('speechSynthesis' in window))return toast('Trình duyệt này chưa hỗ trợ đọc phát âm');stopAi();const was=curT;speechSynthesis.cancel();if(was===t){curT=null;return}curT=t;const u=new SpeechSynthesisUtterance(t.replace(/____/g,'blank'));u.onend=u.onerror=()=>{if(curT===t)curT=null};u.lang='en-US';if(voice){u.voice=voice;u.lang=voice.lang}u.rate=.92;if(!voice)u.pitch=sex==='f'?1.3:.85;speechSynthesis.speak(u)};
   const setSex=x=>{sex=x;put('se:voice',x);pick();const b=document.querySelector('.vbtn span');if(b)b.textContent=x==='f'?'Giọng nữ':'Giọng nam';const vb=document.querySelector('.vbtn');if(vb)vb.dataset.sex=x;speak('hello')};
   const swipe=(el,left,right,o)=>{if(!el)return;o=o||{};let x0=0,y0=0,t0=0,dx=0,on=false,lock=0,hint=null,busy=false,pid=null;const W=()=>el.offsetWidth||300;
     const can=d=>d<0?(o.l?o.l():true):(o.r?o.r():true);
