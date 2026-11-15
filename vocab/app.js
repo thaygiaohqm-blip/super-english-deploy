@@ -30,29 +30,36 @@ async function home(){
     const total=cache[l.id]?cache[l.id].items.length:null;
     if(l.state!=='ready')return '<div class="card-l soon"><span class="big">'+l.name+'</span><h3>'+esc(l.en)+'</h3><p>'+esc(l.note)+'</p><span class="tag warn">Sắp có</span></div>';
     return '<a class="card-l" href="#/'+l.id+'" data-lv="'+l.id+'"><span class="big">'+l.name+'</span><h3>'+esc(l.en)+'</h3><p>'+esc(l.note)+'</p><div class="row"><span class="tag" data-count="'+l.id+'">…</span><span class="tag '+(l.src==='official'?'':'warn')+'">'+(l.src==='official'?'Nguồn Cambridge':l.src==='mixed'?'Cambridge + CEFR-J':'CEFR-J/Octanove + biên soạn')+'</span></div><div class="bar"><i data-bar="'+l.id+'" style="width:0"></i></div></a>'}).join('')+'</div>'
-  +'<h2 class="sect">Ôn tập</h2><div class="grid"><a class="card-l" href="#/on-tap"><h3>Từ cần ôn</h3><p>Những từ bạn đánh dấu "Cần ôn" hoặc trả lời sai sẽ được gom lại ở đây.</p><div class="row"><span class="tag '+(rv?'warn':'')+'">'+rv+' từ</span></div></a></div>'
+  +'<h2 class="sect">Ôn tập</h2><div class="grid"><a class="card-l" href="#/dong-nghia"><h3>Từ đồng nghĩa</h3><p>Hơn 8.000 từ từ A1 đến C2 được gom thành các nhóm đồng nghĩa và cùng trường nghĩa; mỗi từ có nhãn cấp độ, bấm vào để xem chi tiết.</p><div class="row"><span class="tag">A1 → C2</span></div></a><a class="card-l" href="#/on-tap"><h3>Từ cần ôn</h3><p>Những từ bạn đánh dấu "Cần ôn" hoặc trả lời sai sẽ được gom lại ở đây.</p><div class="row"><span class="tag '+(rv?'warn':'')+'">'+rv+' từ</span></div></a></div>'
   +'<div class="note"><b>Về nguồn từ vựng.</b> Cambridge chỉ công bố danh sách từ chính thức đến mức B1 (B1 Preliminary và A2 Key). Từ B2 trở lên họ không có danh sách riêng; ở các cấp đó, trang này sẽ dùng bộ biên soạn theo định hướng English Vocabulary Profile và có ghi chú rõ.</div>';
   for(const l of SE_LEVELS.filter(l=>l.state==='ready')){const d=await load(l.id);if(!d)continue;const c=stat(d.items.map(e=>e.id));
     const t=$('[data-count="'+l.id+'"]');if(t)t.textContent=d.items.length+' từ · '+d.packs.length+' gói';const b=$('[data-bar="'+l.id+'"]');if(b)b.style.width=Math.round(c.ok/d.items.length*100)+'%'}
 }
 /* ---------------- trang cấp độ ---------------- */
-async function level(lv){
+const loadJS=(src,g)=>new Promise(r=>{if(window[g])return r(window[g]);const sc=document.createElement('script');sc.src=src;sc.onload=()=>r(window[g]);sc.onerror=()=>r(null);document.head.appendChild(sc)});
+async function level(lv,view){
   const l=LV[lv];const d=await load(lv);if(!d)return notFound();
   head({h1:l.name+' · '+l.en.split(' · ')[0],lead:l.note,crumb:'<a href="#/">Tất cả cấp độ</a>',meta:[d.items.length+' từ và cụm từ',d.packs.length+' gói']});
   const all=stat(d.items.map(e=>e.id));
   main.innerHTML='<div class="row" style="margin-top:22px;justify-content:space-between"><div class="row"><span class="tag">Đã nhớ '+all.ok+'/'+d.items.length+'</span><span class="tag warn">Cần ôn '+all.rv+'</span></div><div class="row"><a class="btn sm ghost" href="#/'+lv+'/ngau-nhien">Ôn ngẫu nhiên 20 từ</a>'+(all.rv?'<a class="btn sm coral" href="#/'+lv+'/can-on">Ôn từ cần ôn ('+all.rv+')</a>':'')+'</div></div>'
-  +'<h2 class="sect">Các gói từ</h2><div class="grid">'+d.packs.map(p=>{const c=stat(p.ids);return '<a class="card-l" href="#/'+lv+'/'+p.id+'"><h3>'+esc(p.name)+'</h3><p>'+esc(p.sub)+'</p><div class="row"><span class="tag">'+p.ids.length+' từ</span>'+(c.ok===p.ids.length?'<span class="tag" style="background:var(--ok-soft);color:var(--ok)">Hoàn thành</span>':c.ok?'<span class="tag">'+c.ok+' đã nhớ</span>':'')+(c.rv?'<span class="tag warn">'+c.rv+' cần ôn</span>':'')+'</div><div class="bar"><i style="width:'+Math.round(c.ok/p.ids.length*100)+'%"></i></div></a>'}).join('')+'</div>';
+  +'<div class="modes vtabs" role="group" aria-label="Cách chia từ" style="margin-top:18px"><a class="vt" href="#/'+lv+'" aria-pressed="'+(view!=='topic')+'">Theo gói (A–Z)</a><a class="vt" href="#/'+lv+'/chu-de" aria-pressed="'+(view==='topic')+'">Theo chủ đề</a></div>'
+  +(view==='topic'?await topicGrid(lv,d):'<h2 class="sect">Các gói từ</h2><div class="grid">'+d.packs.map(p=>{const c=stat(p.ids);return '<a class="card-l" href="#/'+lv+'/'+p.id+'"><h3>'+esc(p.name)+'</h3><p>'+esc(p.sub)+'</p><div class="row"><span class="tag">'+p.ids.length+' từ</span>'+(c.ok===p.ids.length?'<span class="tag" style="background:var(--ok-soft);color:var(--ok)">Hoàn thành</span>':c.ok?'<span class="tag">'+c.ok+' đã nhớ</span>':'')+(c.rv?'<span class="tag warn">'+c.rv+' cần ôn</span>':'')+'</div><div class="bar"><i style="width:'+Math.round(c.ok/p.ids.length*100)+'%"></i></div></a>'}).join('')+'</div>');
+}
+async function topicGrid(lv,d){
+  const T=await loadJS('data/topics.js','SE_TOPICS');if(!T)return '<p class="hint">Không tải được dữ liệu chủ đề.</p>';
+  return '<h2 class="sect">Các chủ đề</h2><div class="grid">'+T.names.filter(n=>(T.lv[lv][n[0]]||[]).length).map(n=>{const ids=T.lv[lv][n[0]],c=stat(ids);return '<a class="card-l" href="#/'+lv+'/t-'+n[0]+'"><h3>'+esc(n[1])+'</h3><div class="row"><span class="tag">'+ids.length+' từ</span>'+(c.ok===ids.length?'<span class="tag" style="background:var(--ok-soft);color:var(--ok)">Hoàn thành</span>':c.ok?'<span class="tag">'+c.ok+' đã nhớ</span>':'')+(c.rv?'<span class="tag warn">'+c.rv+' cần ôn</span>':'')+'</div><div class="bar"><i style="width:'+Math.round(c.ok/ids.length*100)+'%"></i></div></a>'}).join('')+'</div>';
 }
 /* ---------------- học một gói ---------------- */
 async function pack(lv,pid,mode){
   const d=await load(lv);if(!d)return notFound();
   let items,title,back,sub;
   if(pid==='ngau-nhien'){items=shuffle(d.items).slice(0,20);title='Ôn ngẫu nhiên';sub='20 từ bất kỳ trong cấp '+lv.toUpperCase()}
+  else if(pid.startsWith('t-')){const T=await loadJS('data/topics.js','SE_TOPICS');const id=pid.slice(2),nm=(T.names.find(n=>n[0]===id)||[0,id])[1];items=(T.lv[lv][id]||[]).map(i=>byId[i]);title=nm;sub=items.length+' từ · chủ đề'}
   else if(pid==='can-on'){items=d.items.filter(e=>needs(e.id));title='Từ cần ôn';sub='Các từ bạn đã đánh dấu hoặc trả lời sai'}
   else{const p=d.packs.find(x=>x.id===pid);if(!p)return notFound();items=p.ids.map(i=>byId[i]);title=p.name+' · '+p.sub;sub=p.ids.length+' từ'}
-  head({h1:title,lead:'',crumb:'<a href="#/">Cấp độ</a> › <a href="#/'+lv+'">'+lv.toUpperCase()+'</a>',meta:[sub]});
+  head({h1:title,lead:'',crumb:'<a href="#/">Cấp độ</a> › <a href="#/'+lv+(pid.startsWith('t-')?'/chu-de':'')+'">'+lv.toUpperCase()+'</a>',meta:[sub]});
   if(!items.length){main.innerHTML='<div class="panel" style="margin-top:22px;text-align:center"><h2>Chưa có từ nào ở đây</h2><a class="btn" href="#/'+lv+'">Về danh sách gói</a></div>';return}
-  study({items,pool:d.items,mode:mode||'card',back:'#/'+lv,base:'#/'+lv+'/'+pid})
+  study({items,pool:d.items,mode:mode||'card',back:'#/'+lv+(pid.startsWith('t-')?'/chu-de':''),base:'#/'+lv+'/'+pid})
 }
 async function review(){
   await loadAll();const ids=needIds();
@@ -71,6 +78,12 @@ function study(cfg){
     main.innerHTML='<div class="studybar" style="margin-top:22px"><div class="modes" role="group" aria-label="Chế độ học">'+MODES.map(m=>'<button type="button" data-m="'+m[0]+'" aria-pressed="'+(m[0]===mode)+'">'+m[1]+'</button>').join('')+'</div><span class="tag">'+items.length+' từ</span></div><div id="stage" class="stage">'+inner+'</div>';
     $$('[data-m]',main).forEach(b=>b.onclick=()=>{mode=b.dataset.m;i=0;flip=false;Qz=W=M=null;paint()});
   }
+  /* so sánh chữ bạn gõ với đáp án: đỏ = sai/thừa, xanh = chữ cần có */
+  function diffHtml(typed,ans){const a=[...typed.toLowerCase()],b=[...ans.toLowerCase()],n=a.length,m=b.length,L=Array.from({length:n+1},()=>new Array(m+1).fill(0));
+    for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)L[i][j]=a[i]===b[j]?L[i+1][j+1]+1:Math.max(L[i+1][j],L[i][j+1]);
+    let i=0,j=0,t='',c='';while(i<n&&j<m){if(a[i]===b[j]){t+=esc(typed[i]);c+=esc(ans[j]);i++;j++}else if(L[i+1][j]>=L[i][j+1]){t+='<span class="miss">'+esc(typed[i])+'</span>';i++}else{c+='<span class="ok">'+esc(ans[j])+'</span>';j++}}
+    while(i<n){t+='<span class="miss">'+esc(typed[i++])+'</span>'}while(j<m){c+='<span class="ok">'+esc(ans[j++])+'</span>'}
+    return{t,c}}
   function jud(e,v){prog.set(e.id,v);prog.set('x:'+e.id,null)}
   /* kết quả từ trắc nghiệm / điền từ / ghép cặp: ghi riêng, KHÔNG đè dấu của flashcard */
   function jx(e,v){prog.set('x:'+e.id,v==='rv'?'rv':null)}
@@ -123,7 +136,7 @@ function study(cfg){
     shell('<div class="row" style="justify-content:space-between"><span class="counter" style="text-align:left">Từ '+(W.k+1)+' / '+W.deck.length+'</span><span class="tag">Đúng '+W.right+'</span></div><div class="q"><small>Gõ từ tiếng Anh có nghĩa này · '+esc(e.p)+'</small>'+esc(e.vi)+'</div>'+(e.z?'<p class="hint" style="font-size:16px;margin:4px 0 12px">'+esc(e.z)+'</p>':'')
      +'<input class="input" id="inp" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Gõ đáp án rồi bấm Enter" '+(W.checked?'disabled':'')+'>'
      +(W.hint&&!W.checked?'<p class="hint">Gợi ý: <b>'+esc(h)+'</b></p>':'')
-     +(W.checked?'<div class="verdict '+(W.ok?'ok':'bad')+'">'+(W.ok?'Chính xác! ✓':(W.skip?'Không sao, đáp án là: ':'Chưa đúng ✗ — đáp án: ')+'<b>'+esc(e.w)+'</b>')+'<small>'+(!W.ok&&!W.skip&&W.ans?'Bạn gõ: '+esc(W.ans)+'<br>':'')+(e.c?esc(e.c)+' = '+esc(e.cv):'')+'</small></div><div class="nav"><button class="btn" id="nw" type="button">Từ tiếp →</button></div>':'<div class="nav"><button class="btn ghost sm" id="hint" type="button">Gợi ý</button><button class="btn ghost sm" id="skip" type="button">Không biết</button><button class="btn" id="chk" type="button">Kiểm tra</button></div>'));
+     +(W.checked?'<div class="verdict '+(W.ok?'ok':'bad')+'">'+(W.ok?'Chính xác! ✓':(W.skip?'Không sao, đáp án là: ':'Chưa đúng ✗ — đáp án: ')+'<b>'+esc(e.w)+'</b>')+'<small>'+(!W.ok&&!W.skip&&W.ans?(()=>{const best=e.a.slice().sort((x,y)=>Math.abs(x.length-W.ans.length)-Math.abs(y.length-W.ans.length))[0]||e.w,d=diffHtml(W.ans,best);return '<span class="diff" style="font-size:1.05em">Bạn gõ: '+d.t+'<br>Sửa lại: '+d.c+'</span><br>'})():'')+(e.c?esc(e.c)+' = '+esc(e.cv):'')+'</small></div><div class="nav"><button class="btn" id="nw" type="button">Từ tiếp →</button></div>':'<div class="nav"><button class="btn ghost sm" id="hint" type="button">Gợi ý</button><button class="btn ghost sm" id="skip" type="button">Không biết</button><button class="btn" id="chk" type="button">Kiểm tra</button></div>'));
     const inp=$('#inp');if(!W.checked)inp.focus();else{$('#nw').focus()}
     if(!W.checked){inp.onkeydown=ev=>{if(ev.key==='Enter')check()};$('#chk').onclick=check;$('#skip').onclick=()=>{W.checked=true;W.ok=false;W.skip=true;W.ans='';W.wrong.push(e);jx(e,'rv');write();SE.fx(false,$('.verdict'))};$('#hint').onclick=()=>{W.hint=true;const v=inp.value;write();$('#inp').value=v;$('#inp').focus()}}
     else{$('#nw').onclick=nextW}
@@ -163,11 +176,47 @@ function study(cfg){
   paint();
 }
 let stopStudy=()=>{};
+/* ---------------- từ đồng nghĩa ---------------- */
+const SYNS={tab:'syn',lvs:new Set(['a1','a2','b1','b2','c1','c2']),q:'',n:40};
+async function synonyms(){
+  head({h1:'Từ đồng nghĩa',lead:'Toàn bộ từ vựng A1–C2 được gom nhóm theo nghĩa. Nhãn màu cho biết cấp độ; bấm vào một từ để mở cửa sổ thông tin.',crumb:'<a href="#/">Từ vựng</a>',meta:[]});
+  main.innerHTML='<p class="hint" style="margin-top:22px">Đang tải…</p>';
+  const S=await loadJS('data/syn.js','SE_SYN');await loadAll();if(!S)return notFound();
+  if(!S.byId){S.byId={};S.g.forEach(g=>g[4].forEach(i=>{(S.byId[i]=S.byId[i]||[]).push(g)}))}
+  const lvs=SE_LEVELS.filter(l=>l.state==='ready').map(l=>l.id);
+  const chip=i=>{const e=byId[i];return e?'<button type="button" class="lvw" data-w="'+i+'">'+esc(e.w)+' <span class="lvc lv-'+e.lv+'">'+e.lv.toUpperCase()+'</span></button>':''};
+  const cnt={syn:0,rel:0,one:S.s.length};S.g.forEach(g=>{if(g[3]==='rel')cnt.rel++;else cnt.syn++});
+  function paint(){
+    const T=[['syn','Đồng nghĩa ('+cnt.syn+')'],['rel','Cùng trường nghĩa ('+cnt.rel+')'],['one','Chưa có nhóm ('+cnt.one+')']];
+    const q=SYNS.q.trim().toLowerCase(),nq=SE.norm(q);
+    const match=i=>{const e=byId[i];return e&&SYNS.lvs.has(e.lv)};
+    let list;
+    if(SYNS.tab==='one')list=null;
+    else{list=S.g.filter(g=>SYNS.tab==='rel'?g[3]==='rel':g[3]!=='rel').map(g=>[g,g[4].filter(match)]).filter(([g,ids])=>ids.length>=2&&(!q||ids.some(i=>byId[i].w.toLowerCase().includes(q)||SE.norm(byId[i].vi).includes(nq))||SE.norm(g[0]).includes(nq)||g[1].toLowerCase().includes(q)))}
+    const singles=SYNS.tab==='one'?S.s.filter(i=>match(i)&&(!q||byId[i].w.toLowerCase().includes(q)||SE.norm(byId[i].vi).includes(nq))):null;
+    const total=list?list.length:singles.length;
+    main.innerHTML='<div class="modes" role="group" style="margin-top:22px">'+T.map(t=>'<button type="button" data-t="'+t[0]+'" aria-pressed="'+(SYNS.tab===t[0])+'">'+t[1]+'</button>').join('')+'</div>'
+     +'<div class="row" style="margin:12px 0;flex-wrap:wrap;gap:8px">'+lvs.map(l=>'<button type="button" class="lvf lv-'+l+'" data-l="'+l+'" aria-pressed="'+SYNS.lvs.has(l)+'">'+l.toUpperCase()+'</button>').join('')+'<input class="input" id="sq" placeholder="Lọc theo từ hoặc nghĩa…" value="'+esc(SYNS.q)+'" style="flex:1;min-width:160px;max-width:320px;margin:0"></div>'
+     +'<p class="hint">'+(SYNS.tab==='syn'?'Các từ trong cùng một khung có nghĩa gần như nhau (gom tự động từ WordNet kết hợp nghĩa tiếng Việt, nên đôi chỗ chỉ gần nghĩa).':SYNS.tab==='rel'?'Các từ cùng thuộc một trường nghĩa (ví dụ: các món ăn, các loại phòng) chứ không hẳn đồng nghĩa.':'Những từ chưa tìm được từ đồng nghĩa hay cùng trường nghĩa trong danh sách.')+' · '+total+(list?' nhóm':' từ')+'</p>'
+     +(list?'<div class="synl">'+list.slice(0,SYNS.n).map(([g,ids])=>'<div class="syng"><div class="synt"><b>'+esc(g[0])+'</b>'+(g[1]?'<small>'+esc(g[1])+'</small>':'')+'</div><div class="synw">'+ids.map(chip).join('')+'</div></div>').join('')+'</div>'+(list.length>SYNS.n?'<div style="text-align:center;margin:16px"><button class="btn ghost" id="more" type="button">Hiện thêm ('+(list.length-SYNS.n)+')</button></div>':'')
+       :'<div class="syng"><div class="synw">'+singles.slice(0,SYNS.n*8).map(chip).join('')+'</div></div>'+(singles.length>SYNS.n*8?'<div style="text-align:center;margin:16px"><button class="btn ghost" id="more" type="button">Hiện thêm</button></div>':''));
+    $$('[data-t]').forEach(b=>b.onclick=()=>{SYNS.tab=b.dataset.t;SYNS.n=40;paint()});
+    $$('[data-l]').forEach(b=>b.onclick=()=>{const l=b.dataset.l;SYNS.lvs.has(l)?SYNS.lvs.delete(l):SYNS.lvs.add(l);if(!SYNS.lvs.size)SYNS.lvs.add(l);paint()});
+    const sq=$('#sq');sq.oninput=()=>{SYNS.q=sq.value;clearTimeout(sq._t);sq._t=setTimeout(()=>{SYNS.n=40;const p=sq.selectionStart;paint();const n=$('#sq');n.focus();n.setSelectionRange(p,p)},200)};
+    const mo=$('#more');if(mo)mo.onclick=()=>{SYNS.n+=40;paint()};
+    $$('.lvw').forEach(b=>b.onclick=()=>detail(byId[b.dataset.w]));
+  }
+  paint();
+}
+function synLine(e){const S=window.SE_SYN;if(!S||!S.byId)return '';const gs=(S.byId[e.id]||[]).filter(g=>g[3]!=='rel');if(!gs.length)return '';
+  const ws=[];gs.forEach(g=>g[4].forEach(i=>{if(i!==e.id&&byId[i]&&!ws.includes(i))ws.push(i)}));if(!ws.length)return '';
+  return '<p class="xmp" style="margin-top:10px"><b>Đồng nghĩa:</b> '+ws.slice(0,12).map(i=>'<button type="button" class="lvw" data-w="'+i+'">'+esc(byId[i].w)+' <span class="lvc lv-'+byId[i].lv+'">'+byId[i].lv.toUpperCase()+'</span></button>').join(' ')+'</p>'}
 function detail(e){
   const m=document.createElement('div');m.className='modal';
-  m.innerHTML='<div class="modal__box" role="dialog" aria-modal="true"><button class="modal__x" type="button" aria-label="Đóng">×</button><h2>'+esc(e.w)+'</h2><span class="pos">'+esc(e.p)+'</span><div class="vi">'+esc(e.vi)+'</div>'+(e.c?'<div class="ctx"><b>'+hlWord(e)+'</b><small>'+esc(e.cv)+'</small></div>':'')+(e.x?'<p class="xmp">Ví dụ trong danh sách Cambridge: '+esc(e.x)+'</p>':'')+'<div class="row">'+spk(e.w)+(e.c?spk(e.c).replace('Nghe','Nghe cụm từ'):'')+'<button class="icon-btn" data-j="rv" type="button">Đánh dấu cần ôn</button><button class="icon-btn" data-j="ok" type="button">Đã nhớ</button></div></div>';
+  m.innerHTML='<div class="modal__box" role="dialog" aria-modal="true"><button class="modal__x" type="button" aria-label="Đóng">×</button><h2>'+esc(e.w)+'</h2><span class="pos">'+esc(e.p)+'</span><div class="vi">'+esc(e.vi)+'</div>'+(e.c?'<div class="ctx"><b>'+hlWord(e)+'</b><small>'+esc(e.cv)+'</small></div>':'')+(e.x?'<p class="xmp">Ví dụ trong danh sách Cambridge: '+esc(e.x)+'</p>':'')+''+synLine(e)+'<div class="row">'+spk(e.w)+(e.c?spk(e.c).replace('Nghe','Nghe cụm từ'):'')+'<button class="icon-btn" data-j="rv" type="button">Đánh dấu cần ôn</button><button class="icon-btn" data-j="ok" type="button">Đã nhớ</button></div></div>';
   document.body.appendChild(m);const close=()=>{m.remove();document.removeEventListener('keydown',esck)};const esck=ev=>{if(ev.key==='Escape')close()};
   document.addEventListener('keydown',esck);m.onclick=ev=>{if(ev.target===m||ev.target.closest('.modal__x'))close()};bindSay(m);
+  $$('[data-w]',m).forEach(b=>b.onclick=()=>{m.remove();detail(byId[b.dataset.w])});
   $$('[data-j]',m).forEach(b=>b.onclick=()=>{prog.set(e.id,b.dataset.j);toast(b.dataset.j==='ok'?'Đã nhớ':'Đã đánh dấu cần ôn')})
 }
 /* ---------------- tìm kiếm ---------------- */
@@ -191,7 +240,8 @@ async function route(){
   if(Q.value.trim()&&!parts.length&&false)return;
   if(!parts.length)return home();
   if(parts[0]==='on-tap')return review();
-  if(LV[parts[0]]){if(parts.length===1)return level(parts[0]);return pack(parts[0],parts[1],parts[2])}
+  if(parts[0]==='dong-nghia')return synonyms();
+  if(LV[parts[0]]){if(parts.length===1)return level(parts[0]);if(parts[1]==='chu-de')return level(parts[0],'topic');return pack(parts[0],parts[1],parts[2])}
   notFound();
 }
 window.addEventListener('hashchange',()=>{Q.value='';route()});
