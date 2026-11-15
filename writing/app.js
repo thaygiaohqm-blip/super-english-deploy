@@ -177,7 +177,7 @@ function quiz(colls,bar,base){
     else{const f=q(c.f);const t=q(c.sent.en);const i=t.toLowerCase().indexOf(f.toLowerCase());qh='<div class="q"><small>Chọn cụm điền vào chỗ trống</small><span style="font:500 20px/1.6 var(--serif);display:block">'+esc(c.sent.en.slice(0,i))+'<u>&nbsp;&nbsp;______&nbsp;&nbsp;</u>'+esc(c.sent.en.slice(i+f.length))+'</span></div><p class="hint" style="margin:0">'+esc(c.sent.vi)+'</p>'}
     wrap(bar,'<div class="row" style="justify-content:space-between"><span class="counter" style="text-align:left">Câu '+(k+1)+' / '+deck.length+'</span><span class="tag">Đúng '+right+'</span></div>'+qh+'<div class="opts">'+cur.o.map((o,n)=>'<button class="opt'+(ans!=null?(o===c?' ok':(ans===n?' bad':'')):'')+'" data-o="'+n+'" type="button" '+(ans!=null?'disabled':'')+'><kbd>'+(n+1)+'</kbd>'+esc(cur.t==='cz'?o.en.replace(/\s*\(.*?\)/g,''):o[key])+'</button>').join('')+'</div>'
      +(ans!=null?'<div class="verdict '+(cur.o[ans]===c?'ok':'bad')+'">'+(cur.o[ans]===c?'Chính xác!':'Chưa đúng.')+'<small><b>'+esc(c.en)+'</b> = '+esc(c.vi)+'</small></div><div class="nav"><button class="btn" id="nq" type="button">Câu tiếp →</button></div>':''));
-    $$('[data-o]').forEach(b=>b.onclick=()=>{ans=+b.dataset.o;const ok=cur.o[ans]===c;if(ok){right++;prog.set(c.id,'ok')}else prog.set(c.id,'rv');paint()});
+    $$('[data-o]').forEach(b=>b.onclick=()=>{ans=+b.dataset.o;const ok=cur.o[ans]===c;if(ok){right++;prog.set(c.id,'ok')}else prog.set(c.id,'rv');paint();SE.fx(ok,$('.opt'+(ok?'.ok':'.bad')))});
     const nq=$('#nq');if(nq)nq.onclick=()=>{k++;ans=null;cur=null;paint()};
   }
   paint();
@@ -193,7 +193,7 @@ function fill(colls,bar,base){
      +(hint&&!checked?'<p class="hint">Gợi ý: <b>'+esc(hn)+'</b></p>':'')
      +(checked?'<div class="verdict '+(good?'ok':'bad')+'">'+(good?'Chính xác!':'Đáp án: '+esc(c.f))+'<small>'+esc(c.en)+'</small></div><div class="nav"><button class="btn" id="nx" type="button">Câu tiếp →</button></div>':'<div class="nav"><button class="btn ghost sm" id="h" type="button">Gợi ý</button><button class="btn" id="chk" type="button">Kiểm tra</button></div>'));
     const inp=$('#inp');
-    if(!checked){inp.focus();const check=()=>{const v=toks(inp.value).join(' ');if(!v)return;good=v===toks(f).join(' ');checked=true;if(good){right++;prog.set(c.id,'ok')}else prog.set(c.id,'rv');paint()};inp.onkeydown=ev=>{if(ev.key==='Enter')check()};$('#chk').onclick=check;$('#h').onclick=()=>{hint=true;const v=inp.value;paint();$('#inp').value=v;$('#inp').focus()}}
+    if(!checked){inp.focus();const check=()=>{const v=toks(inp.value).join(' ');if(!v)return;good=v===toks(f).join(' ');checked=true;if(good){right++;prog.set(c.id,'ok')}else prog.set(c.id,'rv');paint();SE.fx(good,$('.verdict'))};inp.onkeydown=ev=>{if(ev.key==='Enter')check()};$('#chk').onclick=check;$('#h').onclick=()=>{hint=true;const v=inp.value;paint();$('#inp').value=v;$('#inp').focus()}}
     else{$('#nx').focus();$('#nx').onclick=()=>{k++;checked=false;hint=false;paint()}}
   }
   paint();

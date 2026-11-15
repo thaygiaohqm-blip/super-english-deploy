@@ -18,12 +18,14 @@ const spk=(t,l)=>'<button class="icon-btn" type="button" data-say="'+esc(t)+'" a
 const bindSay=r=>$$('[data-say]',r).forEach(b=>b.onclick=ev=>{ev.stopPropagation();speak(b.dataset.say)});
 const hlWord=(e)=>{const c=e.c;if(!c)return '';let out=esc(c);for(const a of e.a||[]){const re=new RegExp('(^|[^A-Za-z])('+a.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')(?![A-Za-z])','i');if(re.test(c)){return esc(c).replace(new RegExp('(^|[^A-Za-z])('+esc(a).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')(?![A-Za-z])','i'),'$1<em>$2</em>')}}return out};
 const state=e=>prog.get(e.id);
+const needs=id=>prog.get(id)==='rv'||prog.get('x:'+id)==='rv';
+const needIds=()=>Object.entries(prog.all()).filter(([k,v])=>v==='rv').map(([k])=>k.replace(/^x:/,'')).filter((v,i,a)=>a.indexOf(v)===i);
 const stat=(ids)=>{let ok=0,rv=0;ids.forEach(i=>{const s=prog.get(i);if(s==='ok')ok++;else if(s==='rv')rv++});return{ok,rv}};
 
 /* ---------------- trang chủ ---------------- */
 async function home(){
   head({h1:'Super Vocab',lead:'Từ vựng tiếng Anh theo cụm từ, chia theo cấp độ CEFR. Mỗi cấp chia thành các gói nhỏ để học bằng flashcard, trắc nghiệm, điền từ và ghép cặp.',meta:['A1 → C2','Học theo cụm từ ghép','Có tìm kiếm']});
-  const rv=Object.entries(prog.all()).filter(([,v])=>v==='rv').length;
+  const rv=needIds().length;
   main.innerHTML='<h2 class="sect">Chọn cấp độ</h2><div class="grid">'+SE_LEVELS.map(l=>{
     const total=cache[l.id]?cache[l.id].items.length:null;
     if(l.state!=='ready')return '<div class="card-l soon"><span class="big">'+l.name+'</span><h3>'+esc(l.en)+'</h3><p>'+esc(l.note)+'</p><span class="tag warn">Sắp có</span></div>';
@@ -46,14 +48,14 @@ async function pack(lv,pid,mode){
   const d=await load(lv);if(!d)return notFound();
   let items,title,back,sub;
   if(pid==='ngau-nhien'){items=shuffle(d.items).slice(0,20);title='Ôn ngẫu nhiên';sub='20 từ bất kỳ trong cấp '+lv.toUpperCase()}
-  else if(pid==='can-on'){items=d.items.filter(e=>prog.get(e.id)==='rv');title='Từ cần ôn';sub='Các từ bạn đã đánh dấu hoặc trả lời sai'}
+  else if(pid==='can-on'){items=d.items.filter(e=>needs(e.id));title='Từ cần ôn';sub='Các từ bạn đã đánh dấu hoặc trả lời sai'}
   else{const p=d.packs.find(x=>x.id===pid);if(!p)return notFound();items=p.ids.map(i=>byId[i]);title=p.name+' · '+p.sub;sub=p.ids.length+' từ'}
   head({h1:title,lead:'',crumb:'<a href="#/">Cấp độ</a> › <a href="#/'+lv+'">'+lv.toUpperCase()+'</a>',meta:[sub]});
   if(!items.length){main.innerHTML='<div class="panel" style="margin-top:22px;text-align:center"><h2>Chưa có từ nào ở đây</h2><a class="btn" href="#/'+lv+'">Về danh sách gói</a></div>';return}
   study({items,pool:d.items,mode:mode||'card',back:'#/'+lv,base:'#/'+lv+'/'+pid})
 }
 async function review(){
-  await loadAll();const ids=Object.entries(prog.all()).filter(([,v])=>v==='rv').map(([k])=>k);
+  await loadAll();const ids=needIds();
   const items=ids.map(i=>byId[i]).filter(Boolean);
   head({h1:'Từ cần ôn',lead:'Gom từ mọi cấp độ.',crumb:'<a href="#/">Cấp độ</a>',meta:[items.length+' từ']});
   if(!items.length){main.innerHTML='<div class="panel" style="margin-top:22px;text-align:center"><h2>Chưa có từ nào cần ôn</h2><p>Khi bạn bấm "Cần ôn" ở flashcard hoặc trả lời sai, từ sẽ xuất hiện ở đây.</p><a class="btn" href="#/">Chọn cấp độ để học</a></div>';return}
@@ -69,7 +71,9 @@ function study(cfg){
     main.innerHTML='<div class="studybar" style="margin-top:22px"><div class="modes" role="group" aria-label="Chế độ học">'+MODES.map(m=>'<button type="button" data-m="'+m[0]+'" aria-pressed="'+(m[0]===mode)+'">'+m[1]+'</button>').join('')+'</div><span class="tag">'+items.length+' từ</span></div><div id="stage" class="stage">'+inner+'</div>';
     $$('[data-m]',main).forEach(b=>b.onclick=()=>{mode=b.dataset.m;i=0;flip=false;Qz=W=M=null;paint()});
   }
-  function jud(e,v){prog.set(e.id,v)}
+  function jud(e,v){prog.set(e.id,v);prog.set('x:'+e.id,null)}
+  /* kết quả từ trắc nghiệm / điền từ / ghép cặp: ghi riêng, KHÔNG đè dấu của flashcard */
+  function jx(e,v){prog.set('x:'+e.id,v==='rv'?'rv':null)}
   /* flashcard */
   function card(){
     const e=items[i],st=state(e);let nOk=0,nRv=0;items.forEach(x=>{const v=state(x);if(v==='ok')nOk++;else if(v==='rv')nRv++});
@@ -106,23 +110,25 @@ function study(cfg){
     $$('[data-o]').forEach(b=>b.onclick=()=>answerQ(+b.dataset.o));bindSay(main);
     const nq=$('#nq');if(nq)nq.onclick=nextQ;
   }
-  function answerQ(n){const e=Qz.deck[Qz.k];if(Qz.ans!=null)return;Qz.ans=n;const ok=Qz.cur.opts[n]===e;if(ok){Qz.right++;jud(e,'ok')}else{Qz.wrong.push(e);jud(e,'rv')}quiz()}
+  function answerQ(n){const e=Qz.deck[Qz.k];if(Qz.ans!=null)return;Qz.ans=n;const ok=Qz.cur.opts[n]===e;if(ok){Qz.right++;jx(e,'ok')}else{Qz.wrong.push(e);jx(e,'rv')}quiz();SE.fx(ok,$('.opt'+(ok?'.ok':'.bad')))}
   function nextQ(){Qz.k++;Qz.ans=null;Qz.cur=null;quiz()}
   /* điền từ */
-  function newWrite(){W={deck:shuffle(items),k:0,right:0,wrong:[],checked:false,ok:false,hint:false}}
+  function newWrite(){W={deck:shuffle(items),k:0,right:0,wrong:[],checked:false,ok:false,hint:false,pos:null,skip:false,ans:''}}
   function write(){
     if(!W)newWrite();
     if(W.k>=W.deck.length)return done('Điền từ',W.right,W.deck.length,W.wrong,()=>{newWrite();paint()});
-    const e=W.deck[W.k];const h=e.w[0]+' '+e.w.slice(1).replace(/[^ ()\/-]/g,'_').replace(/ /g,'  ');
+    const e=W.deck[W.k];
+    if(!W.pos){const idx=[...e.w].map((c,i)=>/[A-Za-z]/.test(c)?i:-1).filter(i=>i>=0);const n=idx.length>4?2:1;W.pos=shuffle(idx).slice(0,n)}
+    const h=[...e.w].map((c,i)=>/[A-Za-z0-9]/.test(c)?(W.pos.includes(i)?c:'_'):(c===' '?'  ':c)).join(' ').replace(/ {5}/g,'   ');
     shell('<div class="row" style="justify-content:space-between"><span class="counter" style="text-align:left">Từ '+(W.k+1)+' / '+W.deck.length+'</span><span class="tag">Đúng '+W.right+'</span></div><div class="q"><small>Gõ từ tiếng Anh có nghĩa này · '+esc(e.p)+'</small>'+esc(e.vi)+'</div>'+(e.z?'<p class="hint" style="font-size:16px;margin:4px 0 12px">'+esc(e.z)+'</p>':'')
      +'<input class="input" id="inp" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Gõ đáp án rồi bấm Enter" '+(W.checked?'disabled':'')+'>'
      +(W.hint&&!W.checked?'<p class="hint">Gợi ý: <b>'+esc(h)+'</b></p>':'')
-     +(W.checked?'<div class="verdict '+(W.ok?'ok':'bad')+'">'+(W.ok?'Chính xác!':'Đáp án: '+esc(e.w))+'<small>'+(e.c?esc(e.c)+' = '+esc(e.cv):'')+'</small></div><div class="nav"><button class="btn" id="nw" type="button">Từ tiếp →</button></div>':'<div class="nav"><button class="btn ghost sm" id="hint" type="button">Gợi ý</button><button class="btn" id="chk" type="button">Kiểm tra</button></div>'));
+     +(W.checked?'<div class="verdict '+(W.ok?'ok':'bad')+'">'+(W.ok?'Chính xác! ✓':(W.skip?'Không sao, đáp án là: ':'Chưa đúng ✗ — đáp án: ')+'<b>'+esc(e.w)+'</b>')+'<small>'+(!W.ok&&!W.skip&&W.ans?'Bạn gõ: '+esc(W.ans)+'<br>':'')+(e.c?esc(e.c)+' = '+esc(e.cv):'')+'</small></div><div class="nav"><button class="btn" id="nw" type="button">Từ tiếp →</button></div>':'<div class="nav"><button class="btn ghost sm" id="hint" type="button">Gợi ý</button><button class="btn ghost sm" id="skip" type="button">Không biết</button><button class="btn" id="chk" type="button">Kiểm tra</button></div>'));
     const inp=$('#inp');if(!W.checked)inp.focus();else{$('#nw').focus()}
-    if(!W.checked){inp.onkeydown=ev=>{if(ev.key==='Enter')check()};$('#chk').onclick=check;$('#hint').onclick=()=>{W.hint=true;const v=inp.value;write();$('#inp').value=v;$('#inp').focus()}}
+    if(!W.checked){inp.onkeydown=ev=>{if(ev.key==='Enter')check()};$('#chk').onclick=check;$('#skip').onclick=()=>{W.checked=true;W.ok=false;W.skip=true;W.ans='';W.wrong.push(e);jx(e,'rv');write();SE.fx(false,$('.verdict'))};$('#hint').onclick=()=>{W.hint=true;const v=inp.value;write();$('#inp').value=v;$('#inp').focus()}}
     else{$('#nw').onclick=nextW}
-    function check(){const v=norm(inp.value).replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim();if(!v)return;const ok=e.a.some(a=>norm(a).replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim()===v);W.checked=true;W.ok=ok;if(ok){W.right++;jud(e,'ok')}else{W.wrong.push(e);jud(e,'rv')}write()}
-    function nextW(){W.k++;W.checked=false;W.ok=false;W.hint=false;write()}
+    function check(){const v=norm(inp.value).replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim();if(!v)return;const ok=e.a.some(a=>norm(a).replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim()===v);W.checked=true;W.ok=ok;W.ans=inp.value.trim();if(ok){W.right++;jx(e,'ok')}else{W.wrong.push(e);jx(e,'rv')}write();SE.fx(ok,$('.verdict'))}
+    function nextW(){W.k++;W.checked=false;W.ok=false;W.hint=false;W.pos=null;W.skip=false;write()}
   }
   /* ghép cặp */
   function newMatch(){M={deck:shuffle(items),round:0,miss:0,pairs:0,done:{},sel:null,order:null}}
@@ -134,8 +140,8 @@ function study(cfg){
     shell('<div class="row" style="justify-content:space-between"><span class="counter" style="text-align:left">Lượt '+(M.round+1)+' / '+Math.ceil(M.deck.length/per)+'</span><span class="tag">Nhầm '+M.miss+'</span></div><p class="hint" style="margin-top:0">Bấm một từ tiếng Anh, rồi bấm nghĩa tương ứng</p><div class="pairs"><div class="col">'+M.order.l.map(e=>'<button class="pt'+(M.done[e.id]?' done':'')+(M.sel&&M.sel.id===e.id?' sel':'')+'" data-l="'+e.id+'" type="button">'+esc(e.w)+'</button>').join('')+'</div><div class="col">'+M.order.r.map(e=>'<button class="pt'+(M.done[e.id]?' done':'')+'" data-r="'+e.id+'" type="button">'+esc(e.vi)+'</button>').join('')+'</div></div>');
     $$('[data-l]').forEach(b=>b.onclick=()=>{M.sel=byId[b.dataset.l];speak(M.sel.w);match()});
     $$('[data-r]').forEach(b=>b.onclick=()=>{if(!M.sel)return toast('Chọn từ tiếng Anh trước');
-      if(M.sel.id===b.dataset.r){M.done[M.sel.id]=1;M.pairs++;jud(M.sel,'ok');M.sel=null;if(set.every(e=>M.done[e.id])){M.round++;M.order=null}match()}
-      else{M.miss++;jud(M.sel,'rv');b.classList.add('wrong');setTimeout(()=>{b.classList.remove('wrong')},500);$('#stage .tag').textContent='Nhầm '+M.miss}})
+      if(M.sel.id===b.dataset.r){M.done[M.sel.id]=1;M.pairs++;jx(M.sel,'ok');SE.fx(true,b);M.sel=null;if(set.every(e=>M.done[e.id])){M.round++;M.order=null}match()}
+      else{M.miss++;jx(M.sel,'rv');b.classList.add('wrong');SE.fx(false,b);setTimeout(()=>{b.classList.remove('wrong')},500);$('#stage .tag').textContent='Nhầm '+M.miss}})
   }
   /* danh sách */
   function list(){

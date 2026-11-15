@@ -4,7 +4,7 @@
   const root=document.currentScript.src.replace(/shared\/site\.js.*$/,'');
   const get=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
   const put=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
-  const THEMES=[['reu','Rêu','#004646','#27c4b5','#ed3838'],['ai','Chàm','#233a63','#5fa8d8','#e0533d'],['sakura','Anh đào','#7a2e4a','#ee8fae','#d23b3b'],['matcha','Trà xanh','#3f5a22','#a3c45a','#d9622b'],['momiji','Lá phong','#7a2f14','#f2a04a','#c8102e'],['yoru','Ban đêm','#134e4c','#3fd1c0','#ff6b6b']];
+  const THEMES=[['reu','Rêu','#004646','#27c4b5','#ed3838'],['ai','Chàm','#233a63','#5fa8d8','#e0533d'],['sakura','Anh đào','#7a2e4a','#ee8fae','#d23b3b'],['matcha','Trà xanh','#3f5a22','#a3c45a','#d9622b'],['momiji','Lá phong','#7a2f14','#f2a04a','#c8102e'],['yoru','Ban đêm','#134e4c','#3fd1c0','#ff6b6b'],['tu','Tử đằng','#4b2f7a','#b393e6','#d6457f'],['hophach','Hổ phách','#7a4a05','#f0b429','#c8431d'],['bien','Biển','#0b4a6f','#2eb5d6','#f0614b'],['than','Than đá','#3a3f47','#9aa7b8','#ff7a5c']];
   const applyTheme=id=>{if(!id||id==='reu')delete document.documentElement.dataset.theme;else document.documentElement.dataset.theme=id};
   applyTheme(get('se:theme'));
   const esc=t=>String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -48,9 +48,15 @@
       else reset();setTimeout(()=>{el._moved=false},0)};
     el.addEventListener('pointerup',end);el.addEventListener('pointercancel',()=>{if(on&&lock===1){on=false;reset()}else on=false});el.addEventListener('dragstart',e=>e.preventDefault());
     el.addEventListener('click',e=>{if(el._moved){e.stopImmediatePropagation();e.preventDefault()}},true)};
+  /* hiệu ứng đúng / sai: viền nháy + dấu ✓ / ✗ bay lên; sai thì rung nhẹ */
+  const fx=(ok,el)=>{try{if(el){el.classList.remove('fx-ok','fx-bad');void el.offsetWidth;el.classList.add(ok?'fx-ok':'fx-bad')}
+    const r=el?el.getBoundingClientRect():{left:innerWidth/2,top:innerHeight/2,width:0,height:0};const b=document.createElement('div');b.className='fxb '+(ok?'ok':'bad');b.textContent=ok?'✓':'✗';
+    b.style.left=(r.left+r.width/2)+'px';b.style.top=(r.top+r.height/2)+'px';document.body.appendChild(b);setTimeout(()=>b.remove(),900);
+    if(ok&&!matchMedia('(prefers-reduced-motion:reduce)').matches){for(let i=0;i<8;i++){const d=document.createElement('i');d.className='fxd';d.style.left=(r.left+r.width/2)+'px';d.style.top=(r.top+r.height/2)+'px';d.style.setProperty('--a',(i*45+Math.random()*20)+'deg');document.body.appendChild(d);setTimeout(()=>d.remove(),700)}}
+    if(!ok&&navigator.vibrate)navigator.vibrate(60)}catch(e){}};
   let tt;const toast=m=>{let t=document.querySelector('.toast');if(!t){t=document.createElement('div');t.className='toast';document.body.appendChild(t)}t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,2200)};
   const norm=s=>String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/đ/g,'d').replace(/Đ/g,'D').toLowerCase();
-  window.SE={esc,shuffle,store,speak,toast,norm,root,get,put,swipe,play,playList,sex:()=>sex};
+  window.SE={esc,shuffle,store,speak,toast,norm,root,get,put,swipe,fx,play,playList,sex:()=>sex};
   const logo='<svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="10" fill="#27c4b5"/><path d="M12 11h16v4H17v4h9v4h-9v4h11v4H12z" fill="#003838"/><circle cx="31" cy="30" r="4" fill="#ed3838"/></svg>';
   const link=(h,l,id)=>'<a href="'+root+h+'"'+(page===id?' aria-current="true"':'')+'>'+l+'</a>';
   const s=document.createElement('div');s.className='strip';
