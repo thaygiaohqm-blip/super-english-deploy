@@ -1,0 +1,47 @@
+/* Reading — bài đọc song ngữ, highlight, câu hỏi, đáp án, từ vựng */
+.rtabs{position:sticky;top:var(--stripH,56px);z-index:20;background:var(--bg);padding:10px 0;margin:0 0 8px;display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+.rtabs a{border:2px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 16px;font-weight:700;font-size:14px;text-decoration:none;color:inherit}
+.rtabs a[aria-current="true"]{background:var(--green);color:var(--on-primary);border-color:var(--green)}
+.rbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:14px 0}
+.rbar .modes button{padding:6px 14px;font-size:13px}
+.note{font-size:13px;color:var(--muted);background:var(--mint-soft);border-radius:12px;padding:10px 14px;margin:10px 0}
+.rp{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);border-radius:14px;background:var(--surface);margin:10px 0;overflow:hidden}
+.rp>div{padding:14px 18px;line-height:1.75}
+.rp .en{font:400 18px/1.8 'Source Serif 4',Georgia,serif;border-right:1px solid var(--line)}
+.rp .vi{color:var(--muted);font-size:16px}
+.rp.title .en{font-weight:700;font-size:22px;font-family:var(--ui)}
+.rp.title .vi{font-weight:600}
+.rp.only-en{grid-template-columns:1fr}.rp.only-en .vi{display:none}.rp.only-en .en{border-right:0}
+.rp.hide-en .en{filter:blur(7px);cursor:pointer;user-select:none}
+.rp.hide-en .en.open{filter:none;user-select:auto}
+.rp .pn{float:right;margin:0 0 6px 8px}
+.hl{border:0;font:inherit;color:#1b1b1b;border-radius:4px;padding:1px 2px;cursor:pointer;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.hl-y{background:#fff0a0}.hl-c{background:#b7ebf6}.hl-g{background:#c4efbf}.hl-m{background:#f7c4ee}.hl-r{background:#ffc0c0}
+.hl.nov{cursor:default}
+.nohl .hl{background:transparent!important;cursor:text;color:inherit}
+@media(max-width:760px){.rp{grid-template-columns:1fr}.rp .en{border-right:0;border-bottom:1px dashed var(--line)}}
+.qsec{margin:26px 0 8px}.qsec h2{margin:0 0 4px;font-size:21px}.qsec .qt{color:var(--muted);font-weight:600}
+.qpair{margin:8px 0}.qpair .vi,.qvi{color:var(--muted);font-size:15px}
+.opts{display:grid;gap:6px;margin:12px 0;padding:0;list-style:none}
+.opts li{display:grid;grid-template-columns:30px 1fr;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 12px}
+.opts b{color:var(--green)}.opts small{display:block;color:var(--muted);font-size:14px}
+.qi{display:grid;grid-template-columns:44px 1fr;gap:10px;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:12px;margin:8px 0}
+.qn{width:36px;height:36px;border-radius:50%;background:var(--green);color:var(--on-primary);display:grid;place-items:center;font-weight:800}
+.qi .ans{margin-top:8px}
+.ansbox{border-left:4px solid var(--ok);background:var(--ok-soft);border-radius:8px;padding:10px 14px;margin-top:8px;font-size:15px}
+.ansbox b.k{color:var(--ok);font-size:17px}
+.ansbox .ev{font-family:'Source Serif 4',Georgia,serif;font-style:italic}
+.acard{border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:14px 18px;margin:10px 0}
+.acard h3{margin:0 0 6px;font-size:18px}.acard h3 span{color:var(--ok)}
+.acard p{margin:6px 0;line-height:1.65}
+.qk{display:flex;flex-wrap:wrap;gap:6px 14px;margin:6px 0;font-weight:700}
+.qk span{background:var(--mint-soft);border-radius:8px;padding:4px 10px}
+.ve{border:1px solid var(--line);border-left:5px solid var(--line);background:var(--surface);border-radius:12px;padding:12px 16px;margin:8px 0}
+.ve.c-y{border-left-color:#e9c900}.ve.c-c{border-left-color:#3cbcd8}.ve.c-g{border-left-color:#5bbf53}.ve.c-m{border-left-color:#d86cc8}.ve.c-r{border-left-color:#e25a5a}
+.ve h3{margin:0;font-size:19px;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px}
+.ve .pos{font-style:italic;font-size:14px}.ve .ipa{font-family:Georgia,serif;color:var(--muted);font-size:15px}
+.ve p{margin:6px 0 0;line-height:1.6}.ve .syn{color:var(--green);font-weight:600}
+.ve .exn{font-family:'Source Serif 4',Georgia,serif}.ve .exv{color:var(--muted);font-size:15px}
+.vtop{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0}
+.rlist{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-top:22px}
+.modal .ve h3{padding-right:40px}
