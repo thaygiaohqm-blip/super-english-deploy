@@ -87,7 +87,7 @@ function practice(ex,s,start){
   const toggle=()=>{if(AU&&!AU.paused&&timer){stopSeg()}else play()};
   function render(auto){
     stopSeg();checked=false;hint=0;const {u,k}=us[i];const wc=words(u[2]).length;
-    $('#card').innerHTML='<div class="dcard" id="dc"><div class="dhead"><span>Câu '+(i+1)+'/'+us.length+' · '+wc+' từ'+(best(ex.id,k)!=null?' · tốt nhất '+best(ex.id,k)+'%':'')+'</span><span><span class="kbd">Tab</span> nghe lại · <span class="kbd">Enter</span> kiểm tra</span></div>'
+    $('#card').innerHTML='<div class="dcard" id="dc"><div class="dhead"><span>Câu '+(i+1)+'/'+us.length+' · '+wc+' từ'+(best(ex.id,k)!=null?' · tốt nhất '+best(ex.id,k)+'%':'')+'</span><span><span class="kbd">Ctrl</span> nghe lại · <span class="kbd">Enter</span> kiểm tra</span></div>'
      +'<div class="dctl"><button class="btn ghost sm" id="prev" type="button"'+(i?'':' disabled')+'>← Trước</button><button class="dplay" id="pl" type="button" aria-label="Nghe câu này">'+PLAY+'</button><button class="btn ghost sm" id="next" type="button"'+(i<us.length-1?'':' disabled')+'>Sau →</button></div>'
      +'<div class="dctl" style="margin-top:-6px"><button class="btn ghost sm" id="rate" type="button">Tốc độ '+SP+'x</button><button class="btn ghost sm" id="hint" type="button">Gợi ý</button></div>'
      +'<div id="hn"></div><textarea class="dtx" id="tx" rows="3" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="Nghe rồi gõ lại câu bạn nghe được…" aria-label="Câu bạn nghe được"></textarea>'
@@ -97,7 +97,8 @@ function practice(ex,s,start){
     $('#prev').onclick=()=>{if(i){i--;render(true)}};$('#next').onclick=()=>{if(i<us.length-1){i++;render(true)}};
     $('#hint').onclick=()=>{const w=words(u[2]);hint=Math.min(w.length,hint+1);$('#hn').innerHTML='<div class="dhint">'+w.map((x,q)=>q<hint?esc(x.w):esc(x.w[0])+'_'.repeat(Math.max(1,Math.min(8,x.w.replace(/[^A-Za-z0-9]/g,'').length-1)))).join(' ')+'</div>'};
     $('#ck').onclick=check;$('#ans').onclick=()=>reveal(null);
-    tx.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();if(checked&&lastExact)goNext();else check()}else if(e.key==='Tab'){e.preventDefault();toggle()}});
+    let solo=false;tx.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();if(checked&&lastExact)goNext();else check()}else if(e.key==='Control'){if(!e.repeat)solo=true}else solo=false});
+    tx.addEventListener('keyup',e=>{if(e.key==='Control'&&solo){solo=false;toggle()}});
     if(auto)setTimeout(()=>{play();tx.focus()},120);else tx.focus({preventScroll:true});
   }
   let lastExact=false;
