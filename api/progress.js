@@ -13,7 +13,7 @@ module.exports = async (req, res) => {
     const uid = L.readToken(req.headers.authorization);
     if (!uid) return L.send(res, 401, { error: "Phiên đăng nhập đã hết hạn." });
     const app = String((req.query && req.query.app) || new URL(req.url, "http://x").searchParams.get("app") || "");
-    if (!/^(vocab|writing|speaking|giaotrinh|noi)$/.test(app)) return L.send(res, 400, { error: "Ứng dụng không hợp lệ." });
+    if (!/^(vocab|writing|speaking|giaotrinh|noi|dict)$/.test(app)) return L.send(res, 400, { error: "Ứng dụng không hợp lệ." });
     const kd = "prog:" + app + ":" + uid, kr = "rev:" + app + ":" + uid;
     if (req.method === "GET") {
       const [raw, rev] = await Promise.all([L.redis("GET", kd), L.redis("GET", kr)]);
