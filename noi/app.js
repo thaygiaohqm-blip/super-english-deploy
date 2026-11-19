@@ -18,15 +18,18 @@ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 let live=null;
 function listen(o){
   if(!SR){toast('Trình duyệt chưa hỗ trợ nhận giọng nói. Hãy dùng Chrome/Edge hoặc gõ câu trả lời.');o.end&&o.end({text:'',conf:null});return null}
-  stopListen();speechSynthesis&&speechSynthesis.cancel();
-  const r=new SR();r.lang='en-GB';r.interimResults=true;r.maxAlternatives=1;r.continuous=false;let fin='',cf=[],failed=false;
-  r.onresult=e=>{let it='';for(let i=e.resultIndex;i<e.results.length;i++){const x=e.results[i];if(x.isFinal){fin+=x[0].transcript+' ';cf.push(x[0].confidence)}else it+=x[0].transcript}o.live&&o.live((fin+it).trim())};
-  r.onerror=e=>{failed=true;toast(e.error==='not-allowed'||e.error==='service-not-allowed'?'Hãy cho phép dùng micro cho trang này.':e.error==='no-speech'?'Chưa nghe thấy giọng nói, hãy thử lại gần micro hơn.':'Không nhận được giọng nói ('+e.error+'). Bạn có thể gõ thay thế.')};
-  r.onend=()=>{if(live===r)live=null;o.end({text:fin.trim(),conf:cf.length?cf.reduce((a,b)=>a+b,0)/cf.length:null,failed})};
-  try{r.start();live=r}catch(e){o.end({text:'',conf:null,failed:true})}
+  stopListen(true);speechSynthesis&&speechSynthesis.cancel();
+  const r=new SR();r.lang='en-GB';r.interimResults=true;r.maxAlternatives=1;r.continuous=false;let fin='',cf=[],failed=false,last='',tm=null,fired=false;
+  const end=()=>{if(fired)return;fired=true;clearTimeout(tm);if(live===r)live=null;const text=(fin.trim()||last).trim();o.end({text,conf:cf.length?cf.reduce((a,b)=>a+b,0)/cf.length:null,failed})};
+  /* một số trình duyệt chỉ trả kết quả tạm, không "chốt" và không tự kết thúc: coi như xong sau ~1,6 giây im lặng */
+  const quiet=()=>{clearTimeout(tm);if(!last)return;tm=setTimeout(()=>{try{r.stop()}catch(e){}setTimeout(()=>r._end(),700)},1600)};
+  r.onresult=e=>{let it='';for(let i=e.resultIndex;i<e.results.length;i++){const x=e.results[i];if(x.isFinal){fin+=x[0].transcript+' ';cf.push(x[0].confidence)}else it+=x[0].transcript}last=(fin+it).trim();o.live&&o.live(last);quiet()};
+  r.onerror=e=>{failed=true;toast(e.error==='not-allowed'||e.error==='service-not-allowed'?'Hãy cho phép dùng micro cho trang này.':e.error==='no-speech'?'Chưa nghe thấy giọng nói, hãy thử lại gần micro hơn.':e.error==='aborted'?'':'Không nhận được giọng nói ('+e.error+'). Bạn có thể gõ thay thế.')};
+  r._end=end;r.onend=()=>r._end();
+  try{r.start();live=r}catch(e){end()}
   return r;
 }
-const stopListen=()=>{if(live){try{live.stop()}catch(e){}live=null}};
+const stopListen=(quietly)=>{const r=live;if(!r)return;live=null;try{r.stop()}catch(e){}if(quietly)r._end=()=>{};setTimeout(()=>r._end&&r._end(),700)};
 const CON={"i'm":'i am',"it's":'it is',"he's":'he is',"she's":'she is',"that's":'that is',"what's":'what is',"there's":'there is',"you're":'you are',"we're":'we are',"they're":'they are',"i've":'i have',"don't":'do not',"doesn't":'does not',"didn't":'did not',"can't":'can not',"cannot":'can not',"won't":'will not',"isn't":'is not',"aren't":'are not',"wasn't":'was not',"haven't":'have not',"hasn't":'has not',"i'd":'i would',"i'll":'i will',"let's":'let us',"couldn't":'could not',"wouldn't":'would not',"shouldn't":'should not'};
 const toks=t=>String(t).toLowerCase().replace(/[’‘]/g,"'").replace(/[^a-z0-9' ]+/g,' ').split(/\s+/).filter(Boolean).flatMap(w=>(CON[w]||w).split(' '));
 function match(target,said){
@@ -60,7 +63,7 @@ function roadmap(){
 /* ---------- trang bài ---------- */
 const TABS=[['hoc','1. Học cụm'],['hoithoai','2. Hội thoại'],['nhai','3. Nhại lại'],['ai','4. Nói với AI']];
 function lesson(id,tab){
-  const L=LES[id];if(!L)return roadmap();stopListen();
+  const L=LES[id];if(!L)return roadmap();stopListen(true);
   tab=TABS.some(t=>t[0]===tab)?tab:'hoc';
   head({h1:L.t,lead:esc(L.vi)+' — '+esc(L.goal),crumb:'<a href="#/">Luyện nói</a> › '+esc(L.stage.n)+' · '+esc(L.stage.t),meta:[L.stage.lv,L.ph.length+' cụm']});
   main.innerHTML='<nav class="rtabs" aria-label="Các bước">'+TABS.map(t=>'<a href="#/'+id+'/'+t[0]+'"'+(t[0]===tab?' aria-current="true"':'')+'>'+t[1]+'</a>').join('')+'</nav><div id="body"></div>';
@@ -135,7 +138,7 @@ function room(L,B){
     d.innerHTML=f.ok?'✓ <b>Câu của bạn tự nhiên và đúng.</b>':'<b>Nên nói:</b> '+esc(f.better)+' '+(f.better?'<button type="button" class="icon-btn pl" data-say="'+esc(f.better)+'" aria-label="Nghe">'+ICON+'</button>':'')+((f.notes||[]).length?'<ul>'+f.notes.map(n=>'<li>'+esc(n)+'</li>').join('')+'</ul>':'');
     chat.appendChild(d);bindSay(d);SE.fx&&SE.fx(!!f.ok,d)};
   async function submit(text){
-    text=(text||'').trim();if(!text||busy)return;stopListen();tx.value='';turns++;hist.push({r:'user',t:text});bub('me',text);setBusy(true);
+    text=(text||'').trim();if(!text||busy)return;stopListen(true);tx.value='';turns++;hist.push({r:'user',t:text});bub('me',text);setBusy(true);
     if(mode==='script'){
       const model=cur&&cur.b?cur.b[1]:null;let f;
       if(model){const m=match(model,text);const s=grade(m,null);fixes.push({said:text,better:model,s});f={ok:s>=70,better:s>=70?'':model,notes:s>=70?[]:['Câu mẫu trong bài: bạn có thể nói giống như vậy.']}}else f={ok:true};
@@ -150,7 +153,7 @@ function room(L,B){
     if(turns>=MAX){toast('Đã đủ '+MAX+' lượt, hãy bấm Kết thúc để xem điểm.');}
   }
   async function finish(){
-    if(busy&&mode==='ai')return;setBusy(true);stopListen();$('#end').disabled=true;const R=$('#rep');
+    if(busy&&mode==='ai')return;setBusy(true);stopListen(true);$('#end').disabled=true;const R=$('#rep');
     if(mode==='script'){
       const sc=fixes.filter(f=>f.s!=null),avg=sc.length?Math.round(sc.reduce((a,f)=>a+f.s,0)/sc.length):0;st.set('a:'+L.id,Math.round(avg/10));
       R.innerHTML='<div class="rep"><h2 style="margin:0 0 6px">Kết quả (chế độ kịch bản)</h2><div class="sc'+(avg<60?' lo':'')+'">'+avg+'%</div><p>Mức khớp trung bình với hội thoại mẫu.</p>'
@@ -179,7 +182,7 @@ function room(L,B){
 }
 function route(){
   const p=location.hash.replace(/^#\/?/,'').split('/').filter(Boolean);
-  stopListen();window.scrollTo(0,0);
+  stopListen(true);window.scrollTo(0,0);
   if(!p.length)roadmap();else lesson(p[0],p[1]);
 }
 window.addEventListener('hashchange',route);route();
