@@ -161,9 +161,10 @@ function study(cfg){
   }
   /* danh sách */
   function list(){
-    shell('<div class="list" style="max-width:none">'+items.map((e,n)=>'<button class="it" type="button" data-d="'+n+'"><div><b>'+esc(e.w)+'</b> <span class="ipa">'+esc(SE.ipa(e.w))+'</span> <span>'+esc(e.p)+'</span></div><span class="m">'+esc(e.vi)+'</span><span>'+esc(e.c)+(e.cv?' — '+esc(e.cv):'')+'</span></button>').join('')+'</div>');
-    $('#stage').style.maxWidth='none';
-    $$('[data-d]').forEach(b=>b.onclick=()=>detail(items[+b.dataset.d]))
+    const sp=(txt,lab)=>'<button type="button" class="lsp" data-say="'+esc(txt)+'" aria-label="'+lab+'" title="'+lab+'">'+ICON+'</button>';
+    shell('<div class="list" style="max-width:none">'+items.map((e,n)=>'<div class="it" role="button" tabindex="0" data-d="'+n+'"><div><b>'+esc(e.w)+'</b> '+sp(e.w,'Nghe từ '+e.w)+' <span class="ipa">'+esc(SE.ipa(e.w))+'</span> <span>'+esc(e.p)+'</span></div><span class="m">'+esc(e.vi)+'</span><span>'+(e.c?esc(e.c)+' '+sp(e.c,'Nghe cụm từ '+e.c)+(e.cv?' — '+esc(e.cv):''):'')+'</span></div>').join('')+'</div>');
+    $('#stage').style.maxWidth='none';bindSay(main);
+    $$('[data-d]').forEach(b=>{b.onclick=ev=>{if(ev.target.closest('[data-say]'))return;detail(items[+b.dataset.d])};b.onkeydown=ev=>{if((ev.key==='Enter'||ev.key===' ')&&ev.target===b){ev.preventDefault();detail(items[+b.dataset.d])}}})
   }
   function done(name,right,total,wrong,again,extra){
     shell('<div class="panel done"><div class="ring" style="--p:'+Math.round(right/Math.max(1,total)*100)+'"><b>'+right+'/'+total+'</b></div><h2>Hoàn thành: '+name+'</h2><p>'+(extra||(wrong.length?'Có '+wrong.length+' từ cần ôn lại. Chúng đã được đánh dấu.':'Không sai từ nào!'))+'</p><div class="row" style="justify-content:center"><button class="btn" id="again" type="button">Làm lại</button>'+(wrong.length?'<button class="btn coral" id="wr" type="button">Ôn '+wrong.length+' từ sai</button>':'')+'<a class="btn ghost" href="'+cfg.back+'">Về danh sách</a></div></div>');

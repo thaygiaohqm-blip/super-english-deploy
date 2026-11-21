@@ -260,3 +260,4 @@ button.kp{font:inherit;color:inherit;background:var(--hl);border:0;border-bottom
 .ipa{font-family:'Charis SIL','Gentium Plus','Doulos SIL','Segoe UI Symbol','Noto Sans',Georgia,serif;color:var(--muted);font-size:.95em;letter-spacing:.01em}
 .face .main>.ipa{display:block;text-align:center;font-size:18px;margin:2px 0 6px}
 .face .main>.ipa.ci{font-size:14px;margin:0 0 8px}
+.list .it{cursor:pointer}.lsp{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;border:1px solid var(--line);background:var(--cream);color:var(--green);cursor:pointer;vertical-align:middle;padding:0;margin:0 2px}.lsp:hover{border-color:var(--mint);background:var(--mint-soft)}
