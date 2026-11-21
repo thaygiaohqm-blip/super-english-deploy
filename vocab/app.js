@@ -20,7 +20,9 @@ const hlWord=(e)=>{const c=e.c;if(!c)return '';let out=esc(c);for(const a of e.a
 const state=e=>prog.get(e.id);
 const needs=id=>prog.get(id)==='rv'||prog.get('x:'+id)==='rv';
 const needIds=()=>Object.entries(prog.all()).filter(([k,v])=>v==='rv').map(([k])=>k.replace(/^x:/,'')).filter((v,i,a)=>a.indexOf(v)===i);
-const stat=(ids)=>{let ok=0,rv=0;ids.forEach(i=>{const s=prog.get(i);if(s==='ok')ok++;else if(s==='rv')rv++});return{ok,rv}};
+/* "Đã học xong" của một từ chỉ tính từ flashcard (Đã nhớ) và Điền từ (gõ đúng/sai gần nhất). Trắc nghiệm, ghép cặp, danh sách không tính. */
+const mastered=id=>{const w=prog.get('w:'+id);return w==='ok'||(w!=='no'&&prog.get(id)==='ok')};
+const stat=(ids)=>{let ok=0,rv=0;ids.forEach(i=>{if(mastered(i))ok++;if(prog.get(i)==='rv')rv++});return{ok,rv,pct:ids.length?Math.round(ok/ids.length*100):0}};
 
 /* ---------------- trang chủ ---------------- */
 async function home(){
@@ -43,11 +45,11 @@ async function level(lv,view){
   const all=stat(d.items.map(e=>e.id));
   main.innerHTML='<div class="row" style="margin-top:22px;justify-content:space-between"><div class="row"><span class="tag">Đã nhớ '+all.ok+'/'+d.items.length+'</span><span class="tag warn">Cần ôn '+all.rv+'</span></div><div class="row"><a class="btn sm ghost" href="#/'+lv+'/ngau-nhien">Ôn ngẫu nhiên 20 từ</a>'+(all.rv?'<a class="btn sm coral" href="#/'+lv+'/can-on">Ôn từ cần ôn ('+all.rv+')</a>':'')+'</div></div>'
   +'<div class="modes vtabs" role="group" aria-label="Cách chia từ" style="margin-top:18px"><a class="vt" href="#/'+lv+'" aria-pressed="'+(view!=='topic')+'">Theo gói (A–Z)</a><a class="vt" href="#/'+lv+'/chu-de" aria-pressed="'+(view==='topic')+'">Theo chủ đề</a></div>'
-  +(view==='topic'?await topicGrid(lv,d):'<h2 class="sect">Các gói từ</h2><div class="grid">'+d.packs.map(p=>{const c=stat(p.ids);return '<a class="card-l" href="#/'+lv+'/'+p.id+'"><h3>'+esc(p.name)+'</h3><p>'+esc(p.sub)+'</p><div class="row"><span class="tag">'+p.ids.length+' từ</span>'+(c.ok===p.ids.length?'<span class="tag" style="background:var(--ok-soft);color:var(--ok)">Hoàn thành</span>':c.ok?'<span class="tag">'+c.ok+' đã nhớ</span>':'')+(c.rv?'<span class="tag warn">'+c.rv+' cần ôn</span>':'')+'</div><div class="bar"><i style="width:'+Math.round(c.ok/p.ids.length*100)+'%"></i></div></a>'}).join('')+'</div>');
+  +(view==='topic'?await topicGrid(lv,d):'<h2 class="sect">Các gói từ</h2><div class="grid">'+d.packs.map(p=>{const c=stat(p.ids);return '<a class="card-l" href="#/'+lv+'/'+p.id+'"><h3>'+esc(p.name)+'</h3><p>'+esc(p.sub)+'</p><div class="row"><span class="tag">'+p.ids.length+' từ</span>'+(c.ok===p.ids.length?'<span class="tag" style="background:var(--ok-soft);color:var(--ok)">Hoàn thành</span>':c.ok?'<span class="tag">'+c.pct+'% học xong</span>':'')+(c.rv?'<span class="tag warn">'+c.rv+' cần ôn</span>':'')+'</div><div class="bar"><i style="width:'+Math.round(c.ok/p.ids.length*100)+'%"></i></div></a>'}).join('')+'</div>');
 }
 async function topicGrid(lv,d){
   const T=await loadJS('data/topics.js','SE_TOPICS');if(!T)return '<p class="hint">Không tải được dữ liệu chủ đề.</p>';
-  return '<h2 class="sect">Các chủ đề</h2><div class="grid">'+T.names.filter(n=>(T.lv[lv][n[0]]||[]).length).map(n=>{const ids=T.lv[lv][n[0]],c=stat(ids);return '<a class="card-l" href="#/'+lv+'/t-'+n[0]+'"><h3>'+esc(n[1])+'</h3><div class="row"><span class="tag">'+ids.length+' từ</span>'+(c.ok===ids.length?'<span class="tag" style="background:var(--ok-soft);color:var(--ok)">Hoàn thành</span>':c.ok?'<span class="tag">'+c.ok+' đã nhớ</span>':'')+(c.rv?'<span class="tag warn">'+c.rv+' cần ôn</span>':'')+'</div><div class="bar"><i style="width:'+Math.round(c.ok/ids.length*100)+'%"></i></div></a>'}).join('')+'</div>';
+  return '<h2 class="sect">Các chủ đề</h2><div class="grid">'+T.names.filter(n=>(T.lv[lv][n[0]]||[]).length).map(n=>{const ids=T.lv[lv][n[0]],c=stat(ids);return '<a class="card-l" href="#/'+lv+'/t-'+n[0]+'"><h3>'+esc(n[1])+'</h3><div class="row"><span class="tag">'+ids.length+' từ</span>'+(c.ok===ids.length?'<span class="tag" style="background:var(--ok-soft);color:var(--ok)">Hoàn thành</span>':c.ok?'<span class="tag">'+c.pct+'% học xong</span>':'')+(c.rv?'<span class="tag warn">'+c.rv+' cần ôn</span>':'')+'</div><div class="bar"><i style="width:'+Math.round(c.ok/ids.length*100)+'%"></i></div></a>'}).join('')+'</div>';
 }
 /* ---------------- học một gói ---------------- */
 async function pack(lv,pid,mode){
@@ -57,7 +59,7 @@ async function pack(lv,pid,mode){
   else if(pid.startsWith('t-')){const T=await loadJS('data/topics.js','SE_TOPICS');const id=pid.slice(2),nm=(T.names.find(n=>n[0]===id)||[0,id])[1];items=(T.lv[lv][id]||[]).map(i=>byId[i]);title=nm;sub=items.length+' từ · chủ đề'}
   else if(pid==='can-on'){items=d.items.filter(e=>needs(e.id));title='Từ cần ôn';sub='Các từ bạn đã đánh dấu hoặc trả lời sai'}
   else{const p=d.packs.find(x=>x.id===pid);if(!p)return notFound();items=p.ids.map(i=>byId[i]);title=p.name+' · '+p.sub;sub=p.ids.length+' từ'}
-  head({h1:title,lead:'',crumb:'<a href="#/">Cấp độ</a> › <a href="#/'+lv+(pid.startsWith('t-')?'/chu-de':'')+'">'+lv.toUpperCase()+'</a>',meta:[sub]});
+  head({h1:title,lead:'',crumb:'<a href="#/">Cấp độ</a> › <a href="#/'+lv+(pid.startsWith('t-')?'/chu-de':'')+'">'+lv.toUpperCase()+'</a>',meta:[sub].concat(items.length?['Học xong '+stat(items.map(x=>x.id)).pct+'% (flashcard + điền từ)']:[])});
   if(!items.length){main.innerHTML='<div class="panel" style="margin-top:22px;text-align:center"><h2>Chưa có từ nào ở đây</h2><a class="btn" href="#/'+lv+'">Về danh sách gói</a></div>';return}
   study({items,pool:d.items,mode:mode||'card',back:'#/'+lv+(pid.startsWith('t-')?'/chu-de':''),base:'#/'+lv+'/'+pid})
 }
@@ -72,11 +74,11 @@ async function review(){
 /* ---------------- công cụ học ---------------- */
 function study(cfg){
   const items=cfg.items,pool=cfg.pool;
-  let mode=cfg.mode,i=0,flip=false,Qz=null,W=null,M=null,live=true;
+  let mode=cfg.mode,i=0,flip=false,Qz=null,W=null,M=null,live=true,deck=items.slice(),shuf=false;
   const MODES=[['card','Flashcard'],['quiz','Trắc nghiệm'],['write','Điền từ'],['match','Ghép cặp'],['list','Danh sách']];
   function shell(inner){
-    main.innerHTML='<div class="studybar" style="margin-top:22px"><div class="modes" role="group" aria-label="Chế độ học">'+MODES.map(m=>'<button type="button" data-m="'+m[0]+'" aria-pressed="'+(m[0]===mode)+'">'+m[1]+'</button>').join('')+'</div><span class="tag">'+items.length+' từ</span></div><div id="stage" class="stage">'+inner+'</div>';
-    $$('[data-m]',main).forEach(b=>b.onclick=()=>{mode=b.dataset.m;i=0;flip=false;Qz=W=M=null;paint()});
+    main.innerHTML='<div class="studybar" style="margin-top:22px"><div class="modes" role="group" aria-label="Chế độ học">'+MODES.map(m=>'<button type="button" data-m="'+m[0]+'" aria-pressed="'+(m[0]===mode)+'">'+m[1]+'</button>').join('')+'</div><span class="tag">'+items.length+' từ'+(cfg.parent?' · ôn từ sai (bấm chế độ để về cả gói)':'')+'</span></div><div id="stage" class="stage">'+inner+'</div>';
+    $$('[data-m]',main).forEach(b=>b.onclick=()=>{if(cfg.parent){stopStudy();study(Object.assign({},cfg.parent,{mode:b.dataset.m}));return}mode=b.dataset.m;i=0;flip=false;Qz=W=M=null;paint()});
   }
   /* so sánh chữ bạn gõ với đáp án: đỏ = sai/thừa, xanh = chữ cần có */
   function diffHtml(typed,ans){const a=[...typed.toLowerCase()],b=[...ans.toLowerCase()],n=a.length,m=b.length,L=Array.from({length:n+1},()=>new Array(m+1).fill(0));
@@ -89,17 +91,18 @@ function study(cfg){
   function jx(e,v){prog.set('x:'+e.id,v==='rv'?'rv':null)}
   /* flashcard */
   function card(){
-    const e=items[i],st=state(e);let nOk=0,nRv=0;items.forEach(x=>{const v=state(x);if(v==='ok')nOk++;else if(v==='rv')nRv++});
-    shell('<div class="card'+(flip?' flip':'')+'" id="card"><div class="card__in"><div class="face" aria-hidden="'+flip+'"><div class="top"><span>'+esc(e.p||'từ')+'</span><span>'+(st==='ok'?'<span class="state ok">Đã nhớ</span>':st==='rv'?'<span class="state rv">Cần ôn</span>':'')+'</span></div><div class="main"><div class="say'+(e.w.length>22?' sm':'')+'">'+esc(e.w)+'</div>'+(e.c?'<div class="fcoll">'+esc(e.c)+'</div>':'')+'<div>'+spk(e.w)+(e.c?spk(e.c,'Cụm từ'):'')+'</div></div><div class="hint">Bấm vào thẻ để lật</div></div><div class="face back" aria-hidden="'+!flip+'"><div class="top"><span>'+esc(e.w)+' · '+esc(e.p)+'</span><span>'+(e.t?'':'')+'</span></div><div class="main"><div class="mean">'+esc(e.vi)+'</div>'+(e.c?'<div class="coll">'+hlWord(e)+'<small>'+esc(e.cv)+'</small></div>':'')+(e.x?'<div class="xmp">Ví dụ Cambridge: '+esc(e.x)+'</div>':'')+'<div class="row" style="justify-content:center">'+spk(e.c||e.w)+'</div></div></div></div></div>'
+    const e=deck[i],st=state(e);let nOk=0,nRv=0;deck.forEach(x=>{const v=state(x);if(v==='ok')nOk++;else if(v==='rv')nRv++});
+    shell('<div class="card'+(flip?' flip':'')+'" id="card"><div class="card__in"><div class="face" aria-hidden="'+flip+'"><div class="top"><span>'+esc(e.p||'từ')+'</span><span>'+(st==='ok'?'<span class="state ok">Đã nhớ</span>':st==='rv'?'<span class="state rv">Cần ôn</span>':'')+'</span></div><div class="main"><div class="say'+(e.w.length>22?' sm':'')+'">'+esc(e.w)+'</div>'+SE.ipaH(e.w)+(e.c?'<div class="fcoll">'+esc(e.c)+'</div><span class="ipa ci" style="display:block;text-align:center">'+esc(SE.ipa(e.c))+'</span>':'')+'<div>'+spk(e.w)+(e.c?spk(e.c,'Cụm từ'):'')+'</div></div><div class="hint">Bấm vào thẻ để lật</div></div><div class="face back" aria-hidden="'+!flip+'"><div class="top"><span>'+esc(e.w)+' '+SE.ipaH(e.w)+' · '+esc(e.p)+'</span><span>'+(e.t?'':'')+'</span></div><div class="main"><div class="mean">'+esc(e.vi)+'</div>'+(e.c?'<div class="coll">'+hlWord(e)+'<small>'+esc(e.cv)+'</small></div>':'')+(e.x?'<div class="xmp">Ví dụ Cambridge: '+esc(e.x)+'</div>':'')+'<div class="row" style="justify-content:center">'+spk(e.c||e.w)+'</div></div></div></div></div>'
     +'<div class="jud"><button class="btn rv" data-j="rv" type="button">Cần ôn <small>('+nRv+')</small></button><button class="btn ok" data-j="ok" type="button">Đã nhớ <small>('+nOk+')</small></button></div>'
-    +'<div class="nav"><button class="btn ghost sm" id="prev" type="button" '+(i?'':'disabled')+'>← Trước</button><span class="counter">'+(i+1)+' / '+items.length+'</span><button class="btn ghost sm" id="next" type="button" '+(i<items.length-1?'':'disabled')+'>Sau →</button></div><p class="hint">Vuốt trái/phải để đổi thẻ · Phím tắt: Space lật · ←/→ chuyển · 1 đã nhớ · 2 cần ôn</p>');
-    SE.swipe($('#card'),()=>go(1),()=>go(-1),{l:()=>i<items.length-1,r:()=>i>0});
+    +'<div class="nav"><button class="btn ghost sm" id="prev" type="button" '+(i?'':'disabled')+'>← Trước</button><span class="counter">'+(i+1)+' / '+deck.length+'</span><button class="btn ghost sm" id="next" type="button" '+(i<deck.length-1?'':'disabled')+'>Sau →</button></div><div class="row" style="justify-content:center;margin:10px 0"><button class="btn ghost sm" id="shuf" type="button">Xáo trộn thẻ</button>'+(shuf?'<button class="btn ghost sm" id="ord" type="button">Về thứ tự gốc</button>':'')+'</div><p class="hint">Vuốt trái/phải để đổi thẻ · Phím tắt: Space lật · ←/→ chuyển · 1 đã nhớ · 2 cần ôn</p>');
+    SE.swipe($('#card'),()=>go(1),()=>go(-1),{l:()=>i<deck.length-1,r:()=>i>0});
     $('#card').onclick=ev=>{if(ev.target.closest('[data-say]'))return;flip=!flip;$('#card').classList.toggle('flip',flip)};
     $('#prev').onclick=()=>go(-1);$('#next').onclick=()=>go(1);
-    $$('[data-j]').forEach(b=>b.onclick=()=>{jud(e,b.dataset.j);toast(b.dataset.j==='ok'?'Đã đánh dấu: đã nhớ':'Đã đánh dấu: cần ôn');if(i<items.length-1)go(1);else card()});
+    $('#shuf').onclick=()=>{deck=shuffle(items);shuf=true;i=0;flip=false;toast('Đã xáo trộn '+deck.length+' thẻ');card()};const od=$('#ord');if(od)od.onclick=()=>{deck=items.slice();shuf=false;i=0;flip=false;card()};
+    $$('[data-j]').forEach(b=>b.onclick=()=>{jud(e,b.dataset.j);toast(b.dataset.j==='ok'?'Đã đánh dấu: đã nhớ':'Đã đánh dấu: cần ôn');if(i<deck.length-1)go(1);else card()});
     bindSay(main);
   }
-  const go=d=>{i=Math.max(0,Math.min(items.length-1,i+d));flip=false;paint()};
+  const go=d=>{i=Math.max(0,Math.min(deck.length-1,i+d));flip=false;paint()};
   /* trắc nghiệm */
   function options(e,key,n=3){
     const same=pool.filter(x=>x!==e&&x.p===e.p&&x[key]!==e[key]);const other=pool.filter(x=>x!==e&&x.p!==e.p&&x[key]!==e[key]);
@@ -114,7 +117,7 @@ function study(cfg){
     const e=Qz.deck[Qz.k];
     if(!Qz.cur){const types=['en2vi','vi2en'];if(e.z)types.push('cz','cz');const t=types[Math.random()*types.length|0];Qz.cur={t,opts:options(e,t==='en2vi'?'vi':'w')}}
     const c=Qz.cur;let q,lab;
-    if(c.t==='en2vi'){lab='Chọn nghĩa đúng';q='<div class="q"><small>'+lab+'</small>'+esc(e.w)+'</div><div class="row" style="justify-content:center">'+spk(e.w)+'</div>'}
+    if(c.t==='en2vi'){lab='Chọn nghĩa đúng';q='<div class="q"><small>'+lab+'</small>'+esc(e.w)+'<div class="ipa" style="font-size:.5em;font-weight:400">'+esc(SE.ipa(e.w))+'</div></div><div class="row" style="justify-content:center">'+spk(e.w)+'</div>'}
     else if(c.t==='vi2en'){lab='Chọn từ tiếng Anh đúng';q='<div class="q"><small>'+lab+' · '+esc(e.p)+'</small>'+esc(e.vi)+'</div>'}
     else{lab='Điền từ vào chỗ trống';q='<div class="q"><small>'+lab+'</small>'+esc(e.z)+'</div><p class="hint" style="margin:0">'+esc(e.cv)+'</p>'}
     const key=c.t==='en2vi'?'vi':'w';
@@ -136,11 +139,11 @@ function study(cfg){
     shell('<div class="row" style="justify-content:space-between"><span class="counter" style="text-align:left">Từ '+(W.k+1)+' / '+W.deck.length+'</span><span class="tag">Đúng '+W.right+'</span></div><div class="q"><small>Gõ từ tiếng Anh có nghĩa này · '+esc(e.p)+'</small>'+esc(e.vi)+'</div>'+(e.z?'<p class="hint" style="font-size:16px;margin:4px 0 12px">'+esc(e.z)+'</p>':'')
      +'<input class="input" id="inp" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Gõ đáp án rồi bấm Enter" '+(W.checked?'disabled':'')+'>'
      +(W.hint&&!W.checked?'<p class="hint">Gợi ý: <b>'+esc(h)+'</b></p>':'')
-     +(W.checked?'<div class="verdict '+(W.ok?'ok':'bad')+'">'+(W.ok?'Chính xác! ✓':(W.skip?'Không sao, đáp án là: ':'Chưa đúng ✗ — đáp án: ')+'<b>'+esc(e.w)+'</b>')+'<small>'+(!W.ok&&!W.skip&&W.ans?(()=>{const best=e.a.slice().sort((x,y)=>Math.abs(x.length-W.ans.length)-Math.abs(y.length-W.ans.length))[0]||e.w,d=diffHtml(W.ans,best);return '<span class="diff" style="font-size:1.05em">Bạn gõ: '+d.t+'<br>Sửa lại: '+d.c+'</span><br>'})():'')+(e.c?esc(e.c)+' = '+esc(e.cv):'')+'</small></div><div class="nav"><button class="btn" id="nw" type="button">Từ tiếp →</button></div>':'<div class="nav"><button class="btn ghost sm" id="hint" type="button">Gợi ý</button><button class="btn ghost sm" id="skip" type="button">Không biết</button><button class="btn" id="chk" type="button">Kiểm tra</button></div>'));
+     +(W.checked?'<div class="verdict '+(W.ok?'ok':'bad')+'">'+(W.ok?'Chính xác! ✓ <span class="ipa">'+esc(SE.ipa(e.w))+'</span>':(W.skip?'Không sao, đáp án là: ':'Chưa đúng ✗ — đáp án: ')+'<b>'+esc(e.w)+'</b> <span class="ipa">'+esc(SE.ipa(e.w))+'</span>')+'<small>'+(!W.ok&&!W.skip&&W.ans?(()=>{const best=e.a.slice().sort((x,y)=>Math.abs(x.length-W.ans.length)-Math.abs(y.length-W.ans.length))[0]||e.w,d=diffHtml(W.ans,best);return '<span class="diff" style="font-size:1.05em">Bạn gõ: '+d.t+'<br>Sửa lại: '+d.c+'</span><br>'})():'')+(e.c?esc(e.c)+' = '+esc(e.cv):'')+'</small></div><div class="nav"><button class="btn" id="nw" type="button">Từ tiếp →</button></div>':'<div class="nav"><button class="btn ghost sm" id="hint" type="button">Gợi ý</button><button class="btn ghost sm" id="skip" type="button">Không biết</button><button class="btn" id="chk" type="button">Kiểm tra</button></div>'));
     const inp=$('#inp');if(!W.checked)inp.focus();else{setTimeout(()=>{const n=$('#nw');if(n&&W&&W.checked)n.focus()},460)}
-    if(!W.checked){inp.onkeydown=ev=>{if(ev.key==='Enter'){ev.preventDefault();check()}};$('#chk').onclick=check;$('#skip').onclick=()=>{W.lock=Date.now()+450;W.checked=true;W.ok=false;W.skip=true;W.ans='';W.wrong.push(e);jx(e,'rv');write();SE.fx(false,$('.verdict'))};$('#hint').onclick=()=>{W.hint=true;const v=inp.value;write();$('#inp').value=v;$('#inp').focus()}}
+    if(!W.checked){inp.onkeydown=ev=>{if(ev.key==='Enter'){ev.preventDefault();check()}};$('#chk').onclick=check;$('#skip').onclick=()=>{W.lock=Date.now()+450;W.checked=true;W.ok=false;W.skip=true;W.ans='';W.wrong.push(e);prog.set('w:'+e.id,'no');jx(e,'rv');write();SE.fx(false,$('.verdict'))};$('#hint').onclick=()=>{W.hint=true;const v=inp.value;write();$('#inp').value=v;$('#inp').focus()}}
     else{$('#nw').onclick=()=>{if(Date.now()<(W.lock||0))return;nextW()}}
-    function check(){const v=norm(inp.value).replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim();if(!v)return;const ok=e.a.some(a=>norm(a).replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim()===v);W.lock=Date.now()+450;W.checked=true;W.ok=ok;W.ans=inp.value.trim();if(ok){W.right++;jx(e,'ok')}else{W.wrong.push(e);jx(e,'rv')}write();SE.fx(ok,$('.verdict'));if(ok){const k=W.k;clearTimeout(W.t);W.t=setTimeout(()=>{if(W&&W.k===k&&W.checked&&W.ok)nextW()},750);const nb=$('#nw');if(nb)nb.textContent='Từ tiếp →'}}
+    function check(){const v=norm(inp.value).replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim();if(!v)return;const ok=e.a.some(a=>norm(a).replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim()===v);W.lock=Date.now()+450;W.checked=true;W.ok=ok;W.ans=inp.value.trim();prog.set('w:'+e.id,ok?'ok':'no');if(ok){W.right++;jx(e,'ok')}else{W.wrong.push(e);jx(e,'rv')}write();SE.fx(ok,$('.verdict'))}
     function nextW(){W.k++;W.checked=false;W.ok=false;W.hint=false;W.pos=null;W.skip=false;write()}
   }
   /* ghép cặp */
@@ -158,13 +161,13 @@ function study(cfg){
   }
   /* danh sách */
   function list(){
-    shell('<div class="list" style="max-width:none">'+items.map((e,n)=>'<button class="it" type="button" data-d="'+n+'"><div><b>'+esc(e.w)+'</b> <span>'+esc(e.p)+'</span></div><span class="m">'+esc(e.vi)+'</span><span>'+esc(e.c)+(e.cv?' — '+esc(e.cv):'')+'</span></button>').join('')+'</div>');
+    shell('<div class="list" style="max-width:none">'+items.map((e,n)=>'<button class="it" type="button" data-d="'+n+'"><div><b>'+esc(e.w)+'</b> <span class="ipa">'+esc(SE.ipa(e.w))+'</span> <span>'+esc(e.p)+'</span></div><span class="m">'+esc(e.vi)+'</span><span>'+esc(e.c)+(e.cv?' — '+esc(e.cv):'')+'</span></button>').join('')+'</div>');
     $('#stage').style.maxWidth='none';
     $$('[data-d]').forEach(b=>b.onclick=()=>detail(items[+b.dataset.d]))
   }
   function done(name,right,total,wrong,again,extra){
     shell('<div class="panel done"><div class="ring" style="--p:'+Math.round(right/Math.max(1,total)*100)+'"><b>'+right+'/'+total+'</b></div><h2>Hoàn thành: '+name+'</h2><p>'+(extra||(wrong.length?'Có '+wrong.length+' từ cần ôn lại. Chúng đã được đánh dấu.':'Không sai từ nào!'))+'</p><div class="row" style="justify-content:center"><button class="btn" id="again" type="button">Làm lại</button>'+(wrong.length?'<button class="btn coral" id="wr" type="button">Ôn '+wrong.length+' từ sai</button>':'')+'<a class="btn ghost" href="'+cfg.back+'">Về danh sách</a></div></div>');
-    $('#again').onclick=again;const w=$('#wr');if(w)w.onclick=()=>study({items:wrong,pool,mode:mode,back:cfg.back,base:cfg.base})
+    $('#again').onclick=again;const w=$('#wr');if(w)w.onclick=()=>{const par=cfg.parent||cfg;stopStudy();study({items:wrong,pool,mode:mode,back:cfg.back,base:cfg.base,parent:par})}
   }
   function paint(){({card,quiz,write,match,list})[mode]();if(mode!=='card')window.scrollTo({top:0})}
   /* phím tắt */
@@ -213,7 +216,7 @@ function synLine(e){const S=window.SE_SYN;if(!S||!S.byId)return '';const gs=(S.b
   return '<p class="xmp" style="margin-top:10px"><b>Đồng nghĩa:</b> '+ws.slice(0,12).map(i=>'<button type="button" class="lvw" data-w="'+i+'">'+esc(byId[i].w)+' <span class="lvc lv-'+byId[i].lv+'">'+byId[i].lv.toUpperCase()+'</span></button>').join(' ')+'</p>'}
 function detail(e){
   const m=document.createElement('div');m.className='modal';
-  m.innerHTML='<div class="modal__box" role="dialog" aria-modal="true"><button class="modal__x" type="button" aria-label="Đóng">×</button><h2>'+esc(e.w)+'</h2><span class="pos">'+esc(e.p)+'</span><div class="vi">'+esc(e.vi)+'</div>'+(e.c?'<div class="ctx"><b>'+hlWord(e)+'</b><small>'+esc(e.cv)+'</small></div>':'')+(e.x?'<p class="xmp">Ví dụ trong danh sách Cambridge: '+esc(e.x)+'</p>':'')+''+synLine(e)+'<div class="row">'+spk(e.w)+(e.c?spk(e.c).replace('Nghe','Nghe cụm từ'):'')+'<button class="icon-btn" data-j="rv" type="button">Đánh dấu cần ôn</button><button class="icon-btn" data-j="ok" type="button">Đã nhớ</button></div></div>';
+  m.innerHTML='<div class="modal__box" role="dialog" aria-modal="true"><button class="modal__x" type="button" aria-label="Đóng">×</button><h2>'+esc(e.w)+'</h2>'+SE.ipaH(e.w)+' <span class="pos">'+esc(e.p)+'</span><div class="vi">'+esc(e.vi)+'</div>'+(e.c?'<div class="ctx"><b>'+hlWord(e)+'</b><small>'+esc(e.cv)+'</small></div>':'')+(e.x?'<p class="xmp">Ví dụ trong danh sách Cambridge: '+esc(e.x)+'</p>':'')+''+synLine(e)+'<div class="row">'+spk(e.w)+(e.c?spk(e.c).replace('Nghe','Nghe cụm từ'):'')+'<button class="icon-btn" data-j="rv" type="button">Đánh dấu cần ôn</button><button class="icon-btn" data-j="ok" type="button">Đã nhớ</button></div></div>';
   document.body.appendChild(m);const close=()=>{m.remove();document.removeEventListener('keydown',esck)};const esck=ev=>{if(ev.key==='Escape')close()};
   document.addEventListener('keydown',esck);m.onclick=ev=>{if(ev.target===m||ev.target.closest('.modal__x'))close()};bindSay(m);
   $$('[data-w]',m).forEach(b=>b.onclick=()=>{m.remove();detail(byId[b.dataset.w])});
@@ -228,7 +231,7 @@ async function search(q){
     else if(vi.includes(n))s=40;else if(c.includes(n))s=30;else if(cv.includes(n))s=25;return s};
   const r=items.map(e=>[score(e),e]).filter(x=>x[0]).sort((a,b)=>b[0]-a[0]||a[1].w.localeCompare(b[1].w)).slice(0,60);
   head({h1:'Tìm kiếm',lead:'',crumb:'<a href="#/">Trang chủ</a>',meta:[r.length+' kết quả cho "'+q+'"']});
-  main.innerHTML=r.length?'<div class="res">'+r.map(([,e],n)=>'<button type="button" data-r="'+n+'"><b>'+esc(e.w)+' <span class="pos">'+esc(e.p)+' · '+e.lv.toUpperCase()+'</span></b><span>'+esc(e.vi)+'</span><small>'+esc(e.c)+(e.cv?' — '+esc(e.cv):'')+'</small></button>').join('')+'</div>':'<div class="panel" style="margin-top:22px;text-align:center"><h2>Không tìm thấy</h2><p>Thử gõ một phần của từ, hoặc gõ nghĩa tiếng Việt.</p></div>';
+  main.innerHTML=r.length?'<div class="res">'+r.map(([,e],n)=>'<button type="button" data-r="'+n+'"><b>'+esc(e.w)+' '+SE.ipaH(e.w)+' <span class="pos">'+esc(e.p)+' · '+e.lv.toUpperCase()+'</span></b><span>'+esc(e.vi)+'</span><small>'+esc(e.c)+(e.cv?' — '+esc(e.cv):'')+'</small></button>').join('')+'</div>':'<div class="panel" style="margin-top:22px;text-align:center"><h2>Không tìm thấy</h2><p>Thử gõ một phần của từ, hoặc gõ nghĩa tiếng Việt.</p></div>';
   $$('[data-r]').forEach(b=>b.onclick=()=>detail(r[+b.dataset.r][1]))
 }
 function notFound(){head({h1:'Không tìm thấy trang',crumb:'<a href="#/">Về trang chủ</a>'});main.innerHTML='<div class="panel" style="margin-top:22px"><p>Đường dẫn này chưa có nội dung.</p><a class="btn" href="#/">Về trang chủ</a></div>'}

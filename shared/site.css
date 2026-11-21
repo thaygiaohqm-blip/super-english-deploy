@@ -256,3 +256,7 @@ button.kp{font:inherit;color:inherit;background:var(--hl);border:0;border-bottom
 .syng{border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:12px 14px}
 .synt{margin-bottom:8px}.synt small{margin-left:8px;color:var(--muted)}
 .synw{display:flex;flex-wrap:wrap}
+
+.ipa{font-family:'Charis SIL','Gentium Plus','Doulos SIL','Segoe UI Symbol','Noto Sans',Georgia,serif;color:var(--muted);font-size:.95em;letter-spacing:.01em}
+.face .main>.ipa{display:block;text-align:center;font-size:18px;margin:2px 0 6px}
+.face .main>.ipa.ci{font-size:14px;margin:0 0 8px}

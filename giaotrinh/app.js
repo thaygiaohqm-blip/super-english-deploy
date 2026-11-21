@@ -54,7 +54,7 @@ function openTip(word,r,src,ctx){
   closeTip();const saved=findW(word);r=r||{vi:''};
   tip=document.createElement('div');tip.className='gtip';
   tip.innerHTML='<h3>'+esc(word)+(r.lv?' <span class="lvb" style="font-size:.72rem;vertical-align:middle">'+r.lv.toUpperCase()+'</span>':'')+'</h3>'
-   +'<div style="color:var(--muted);font-size:.92rem">'+(r.ipa?'<span style="font-family:Georgia,serif">'+esc(r.ipa)+'</span> ':'')+(r.pos?'· '+esc(r.pos):'')+'</div>'
+   +'<div style="color:var(--muted);font-size:.92rem">'+(SE.ipa(word)||r.ipa?'<span class="ipa">'+esc(SE.ipa(word)||r.ipa)+'</span> ':'')+(r.pos?'· '+esc(r.pos):'')+'</div>'
    +'<div class="mean" style="margin:2px 0 4px;font-size:1.05rem">'+(r.vi?esc(r.vi):'<span style="color:var(--muted)">Chưa có nghĩa sẵn cho từ này.</span>')+'</div>'
    +(r.lv?'<div style="margin:2px 0 4px"><a class="lvb" href="../vocab/#/'+r.lv+(r.pid?'/'+r.pid:'')+'" target="_blank" rel="noopener">Mở trong tab Từ vựng '+r.lv.toUpperCase()+' ↗</a></div>':'')
    +(r.x?'<div style="margin:4px 0;color:var(--muted);font-size:.92rem"><b>Ví dụ:</b> '+esc(r.x)+'</div>':'')

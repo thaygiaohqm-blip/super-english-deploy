@@ -17,7 +17,7 @@ function paint(en){
 const plain=en=>en.replace(/\{\{\w\d*:(.*?)\}\}/g,'$1');
 const isVi=t=>/[ăâđêôơưáàảãạấầẩẫậắằẳẵặéèẻẽẹếềểễệíìỉĩịóòỏõọốồổỗộớờởỡợúùủũụứừửữựýỳỷỹỵ]/i.test(t);
 function entry(v,i,pop){
-  return '<article class="ve'+(v.c?' c-'+v.c:'')+'" id="v'+i+'"><h3>'+esc(v.w)+(v.pos?' <span class="pos">('+esc(v.pos)+')</span>':'')+(v.ipa?' <span class="ipa">'+esc(v.ipa)+'</span>':'')+spk(v.w)+'</h3>'
+  return '<article class="ve'+(v.c?' c-'+v.c:'')+'" id="v'+i+'"><h3>'+esc(v.w)+(v.pos?' <span class="pos">('+esc(v.pos)+')</span>':'')+(v.ipa||SE.ipa(v.w)?' <span class="ipa">'+esc(v.ipa||SE.ipa(v.w))+'</span>':'')+spk(v.w)+'</h3>'
    +'<p>'+esc(v.mean)+'</p>'+(v.syn?'<p class="syn">Synonyms: '+esc(v.syn)+'</p>':'')
    +(v.ex?'<p><b>VD:</b> <span class="exn">'+esc(v.ex)+'</span>'+spk(v.ex)+(v.exvi?'<br><span class="exv">'+esc(v.exvi)+'</span>':'')+'</p>':'')+'</article>';
 }

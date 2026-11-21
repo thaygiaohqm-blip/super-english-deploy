@@ -31,7 +31,7 @@ const stC=c=>prog.get(c.id);
 function collModal(c){
   const m=document.createElement('div');m.className='modal';const s=c.sent;
   const st=stC(c);
-  m.innerHTML='<div class="modal__box" role="dialog" aria-modal="true"><button class="modal__x" type="button" aria-label="Đóng">×</button><span class="tag">'+esc(c.e.no)+' · collocation</span><h2 style="margin-top:8px">'+esc(c.en)+'</h2><div class="vi">'+esc(c.vi)+'</div>'
+  m.innerHTML='<div class="modal__box" role="dialog" aria-modal="true"><button class="modal__x" type="button" aria-label="Đóng">×</button><span class="tag">'+esc(c.e.no)+' · collocation</span><h2 style="margin-top:8px">'+esc(c.en)+'</h2>'+SE.ipaH(c.en)+'<div class="vi">'+esc(c.vi)+'</div>'
    +(s?'<div class="ctx"><div class="en" style="font-family:var(--serif)">'+hl(s,c.e,true)+'</div><small>'+esc(s.vi)+'</small></div>':'')
    +'<div class="row">'+spk(c.en.replace(/\s*\(.*?\)/g,''),'Nghe cụm từ')+(s?spk(s.en,'Nghe câu'):'')+'</div><div class="row" style="margin-top:12px"><button class="btn sm coral" data-j="rv" type="button">Cần ôn</button><button class="btn sm" data-j="ok" type="button" style="background:var(--ok);border-color:var(--ok)">Đã nhớ</button>'+(st?'<span class="state '+st+'">'+(st==='ok'?'Đã nhớ':'Cần ôn')+'</span>':'')+'</div></div>';
   document.body.appendChild(m);const close=()=>{m.remove();document.removeEventListener('keydown',ek)};const ek=ev=>{if(ev.key==='Escape')close()};document.addEventListener('keydown',ek);
@@ -82,7 +82,7 @@ function essay(id,tab){
     body=(tab==='en'?promptBox:'')+'<div class="panel essay-text">'+e.paras.map(p=>'<p>'+p.map(s=>tab==='en'?hl(s,e):esc(s.vi)).join(' ')+'</p>').join('')+'</div>'+(e.note?'<div class="note">'+esc(e.note)+'</div>':'');
   }
   else if(tab==='colloc'){
-    body='<div class="row" style="justify-content:space-between;margin-bottom:12px"><span class="legend" style="margin:0">Bấm vào một cụm để xem nghĩa, câu chứa nó và đánh dấu mức nhớ.</span><a class="btn sm" href="#/e/'+e.id+'/on-tap">Ôn các collocation này</a></div><div class="collgrid">'+e.colls.map(c=>{const st=stC(c);return '<button type="button" data-cc="'+c.n+'"><b>'+esc(c.en)+(st?' <span class="state '+st+'">'+(st==='ok'?'Đã nhớ':'Cần ôn')+'</span>':'')+'</b><span>'+esc(c.vi)+'</span></button>'}).join('')+'</div>';
+    body='<div class="row" style="justify-content:space-between;margin-bottom:12px"><span class="legend" style="margin:0">Bấm vào một cụm để xem nghĩa, câu chứa nó và đánh dấu mức nhớ.</span><a class="btn sm" href="#/e/'+e.id+'/on-tap">Ôn các collocation này</a></div><div class="collgrid">'+e.colls.map(c=>{const st=stC(c);return '<button type="button" data-cc="'+c.n+'"><b>'+esc(c.en)+(st?' <span class="state '+st+'">'+(st==='ok'?'Đã nhớ':'Cần ôn')+'</span>':'')+'</b>'+SE.ipaH(c.en)+'<span>'+esc(c.vi)+'</span></button>'}).join('')+'</div>';
   }
   else if(tab==='own'){
     body='<div class="panel essay-text">'+e.own.paras.map(p=>'<p>'+esc(p)+'</p>').join('')+'</div>';
